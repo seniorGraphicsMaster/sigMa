@@ -3,6 +3,7 @@
 #include "cgut2.h"			// slee's OpenGL utility
 #include "trackball.h"
 #include "assimp_loader.h"
+#include "model.h"
 
 //*************************************
 // global constants
@@ -12,6 +13,7 @@ static const char*	frag_shader_path = "shaders/model.frag";
 //static const char*	mesh_obj = "mesh/head/head.obj";
 static const char*	mesh_3ds = "mesh/head/head.3ds";
 static const char*	mesh_obj = "mesh/room_Test/map_test.obj";
+static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 
 //*************************************
 // common structures
@@ -43,10 +45,12 @@ GLuint	program	= 0;	// ID holder for GPU program
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_2d = false;
+float	t;
+auto	models = std::move(set_pos()); // positions of models
 
 //*************************************
 // scene objects
-mesh2*		pMesh = nullptr;
+std::vector<mesh2*>		pMesh;
 camera		cam;
 trackball	tb;
 // custom function
@@ -68,7 +72,7 @@ void update()
 
 	// update projection matrix
 	cam.aspect_ratio = window_size.x/float(window_size.y);
-	if (b_2d) {
+	if (b_2d) { // 카메라 부분
 		mat4 aspect_matrix =
 		{
 			std::min(1 / cam.aspect_ratio,1.0f), 0, 0, 0,
@@ -83,10 +87,9 @@ void update()
 	}
 
 	// build the model matrix for oscillating scale
-	float t = float(glfwGetTime());
-	float scale	= 1.0f+float(cos(t*1.5f))*0.05f;
+	t = float(glfwGetTime());
+	float scale = 1.0f;
 	mat4 model_matrix = mat4::scale( scale, scale, scale );
-
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
@@ -105,10 +108,12 @@ void render()
 	glUseProgram( program );
 
 	// bind vertex array object
-	glBindVertexArray( pMesh->vertex_array );
-
-	for( size_t k=0, kn=pMesh->geometry_list.size(); k < kn; k++ ) {
-		geometry& g = pMesh->geometry_list[k];
+	glBindVertexArray( pMesh[0]->vertex_array );
+	models[0].update(t);
+	GLint uloc;
+	uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, models[0].model_matrix);
+	for( size_t k=0, kn= pMesh[0]->geometry_list.size(); k < kn; k++ ) {
+		geometry& g = pMesh[0]->geometry_list[k];
 
 		if (g.mat->textures.diffuse) {
 			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
@@ -120,8 +125,29 @@ void render()
 		}
 
 		// render vertices: trigger shader programs to process vertex data
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, pMesh->index_buffer );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, pMesh[0]->index_buffer );
 		glDrawElements( GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start*sizeof(GLuint)) );
+	}
+	glBindVertexArray(pMesh[1]->vertex_array);
+	models[1].update(t);
+	GLint uloc1;
+	uloc1 = glGetUniformLocation(program, "model_matrix");		if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, models[1].model_matrix);
+	for (size_t k = 0, kn = pMesh[1]->geometry_list.size(); k < kn; k++) {
+		geometry& g = pMesh[1]->geometry_list[k];
+
+		if (g.mat->textures.diffuse) {
+			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		}
+		else {
+			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+		}
+
+		// render vertices: trigger shader programs to process vertex data
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[1]->index_buffer);
+		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 	}
 
 	// swap front and back buffers, and display to screen
@@ -161,8 +187,8 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 
 			glFinish();
 			delete_texture_cache();
-			delete pMesh;
-			pMesh = load_model(is_obj ? mesh_obj : mesh_3ds);
+			pMesh.clear();
+			pMesh[0] = load_model(is_obj ? mesh_obj : mesh_3ds);
 		}
 		else if (key == GLFW_KEY_R)
 		{
@@ -202,8 +228,9 @@ bool user_init()
 	glActiveTexture( GL_TEXTURE0 );
 
 	// load the mesh
-	pMesh = load_model(mesh_obj);
-	if(pMesh==nullptr){ printf( "Unable to load mesh\n" ); return false; }
+	pMesh.emplace_back(load_model(mesh_obj));
+	pMesh.emplace_back(load_model(mesh_hero));
+	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 
 	return true;
 }
@@ -211,7 +238,7 @@ bool user_init()
 void user_finalize()
 {
 	delete_texture_cache();
-	delete pMesh;
+	pMesh.clear();
 }
 
 int main( int argc, char* argv[] )

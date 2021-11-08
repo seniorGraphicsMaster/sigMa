@@ -62,6 +62,7 @@
     <ClInclude Include="assimp_loader.h" />
     <ClInclude Include="cgmath.h" />
     <ClInclude Include="cgut2.h" />
+    <ClInclude Include="model.h" />
     <ClInclude Include="trackball.h" />
   </ItemGroup>
   <ItemGroup>
