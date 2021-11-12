@@ -5,7 +5,7 @@
 
 struct model_t
 {
-	vec2	center=vec2(0);		// 2D position for translation
+	vec3	center=vec3(0);		// 2D position for translation
 	float	scale;
 	float	theta = 0.0f;			// rotation angle
 	float	time = 0.0f;				// check time
@@ -17,9 +17,9 @@ struct model_t
 inline std::vector<model_t> set_pos() {
 	std::vector<model_t> arr;
 	model_t m;
-	m = {vec2(0),2.0f};
+	m = {vec3(5.0f,5.0f,0.0f),1.0f};//warehouse
 	arr.emplace_back(m);
-	m = {vec2(50.0f,50.0f),1.0f };
+	m = {vec3(0.0f,0.0f,1.0f),1.0f };//hero
 	arr.emplace_back(m);
 	return arr;
 }
@@ -54,7 +54,7 @@ inline void model_t::update(float t)
 	{
 		1, 0, 0, center.x,
 		0, 1, 0, center.y,
-		0, 0, 1, 0,
+		0, 0, 1, center.z,
 		0, 0, 0, 1
 	};
 

@@ -10,18 +10,16 @@
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "shaders/model.vert";
 static const char*	frag_shader_path = "shaders/model.frag";
-//static const char*	mesh_obj = "mesh/head/head.obj";
-static const char*	mesh_3ds = "mesh/head/head.3ds";
-static const char*	mesh_obj = "mesh/room_Test/map_test.obj";
+static const char* mesh_warehouse = "mesh/Room/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 
 //*************************************
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 0, -100, 10 );
+	vec3	eye = vec3( 50, 0, 1 );
 	vec3	at = vec3( 0, 0, 0 );
-	vec3	up = vec3( 0, 1, 0 );
+	vec3	up = vec3( -1, 0, 0 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
 		
 	float	fovy = PI/4.0f; // must be in radian
@@ -80,10 +78,11 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-400.0f, 400.0f, -400.0f, 400.0f, cam.dNear, cam.dFar);
+		cam.projection_matrix = aspect_matrix * Ortho(models[1].center.y- 30.0f, models[1].center.y + 30.0f, models[1].center.z - 30.0f, models[1].center.z + 30.0f, 30, 400); // 보이는 영역
+		cam.view_matrix = mat4::look_at(models[1].center + vec3(50, 0, 1), models[1].center, vec3( -1, 0, 0 )); // 시점 확정
 	}
 	else {
-		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar);
+		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
 	}
 
 	// build the model matrix for oscillating scale
@@ -96,7 +95,7 @@ void update()
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
 	uloc = glGetUniformLocation( program, "model_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, model_matrix );
 
-	glActiveTexture(GL_TEXTURE0);								// select the texture slot to bind
+	// select the texture slot to bind
 }
 
 void render()
@@ -106,7 +105,7 @@ void render()
 	
 	// notify GL that we use our own program
 	glUseProgram( program );
-
+	glActiveTexture(GL_TEXTURE0);
 	// bind vertex array object
 	glBindVertexArray( pMesh[0]->vertex_array );
 	models[0].update(t);
@@ -114,11 +113,12 @@ void render()
 	uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, models[0].model_matrix);
 	for( size_t k=0, kn= pMesh[0]->geometry_list.size(); k < kn; k++ ) {
 		geometry& g = pMesh[0]->geometry_list[k];
-
+		
 		if (g.mat->textures.diffuse) {
 			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+			
 		} else {
 			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
@@ -180,16 +180,6 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if(key==GLFW_KEY_H||key==GLFW_KEY_F1)	print_help();
 		else if(key==GLFW_KEY_HOME)					cam = camera();
 		else if(key==GLFW_KEY_T)					show_texcoord = !show_texcoord;
-		else if(key==GLFW_KEY_D)
-		{
-			static bool is_obj = true;
-			is_obj = !is_obj;
-
-			glFinish();
-			delete_texture_cache();
-			pMesh.clear();
-			pMesh[0] = load_model(is_obj ? mesh_obj : mesh_3ds);
-		}
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
@@ -228,7 +218,7 @@ bool user_init()
 	glActiveTexture( GL_TEXTURE0 );
 
 	// load the mesh
-	pMesh.emplace_back(load_model(mesh_obj));
+	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 
