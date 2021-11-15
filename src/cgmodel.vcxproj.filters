@@ -23,6 +23,9 @@
     <ClCompile Include="assimp_loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="text.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cgmath.h">
@@ -40,12 +43,21 @@
     <ClInclude Include="model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="stb_truetype.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\bin\shaders\model.frag">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="..\bin\shaders\model.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="text.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="text.frag">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

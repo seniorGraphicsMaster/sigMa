@@ -5,6 +5,11 @@
 #include "assimp_loader.h"
 #include "model.h"
 
+//*******************************************************************
+// forward declarations for freetype text
+bool init_text();
+void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
+
 //*************************************
 // global constants
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
@@ -17,9 +22,9 @@ static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 50, 0, 1 );
+	vec3	eye = vec3( 0, -50, 100 );
 	vec3	at = vec3( 0, 0, 0 );
-	vec3	up = vec3( -1, 0, 0 );
+	vec3	up = vec3( 0, 1, 0 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
 		
 	float	fovy = PI/4.0f; // must be in radian
@@ -78,11 +83,12 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(models[1].center.y- 30.0f, models[1].center.y + 30.0f, models[1].center.z - 30.0f, models[1].center.z + 30.0f, 30, 400); // 보이는 영역
+		cam.projection_matrix = aspect_matrix * Ortho(models[1].center.y- 30.0f, models[1].center.y + 30.0f, models[1].center.z - 30.0f, models[1].center.z + 30.0f, 34.f, 400); // 보이는 영역
 		cam.view_matrix = mat4::look_at(models[1].center + vec3(50, 0, 1), models[1].center, vec3( -1, 0, 0 )); // 시점 확정
 	}
 	else {
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
+		//cam.view_matrix = mat4::look_at(vec3(0, -50, 100), vec3(0), vec3(0, 1, 0));
 	}
 
 	// build the model matrix for oscillating scale
@@ -109,6 +115,7 @@ void render()
 	// bind vertex array object
 	glBindVertexArray( pMesh[0]->vertex_array );
 	models[0].update(t);
+
 	GLint uloc;
 	uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, models[0].model_matrix);
 	for( size_t k=0, kn= pMesh[0]->geometry_list.size(); k < kn; k++ ) {
@@ -149,7 +156,11 @@ void render()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[1]->index_buffer);
 		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 	}
-
+	//text render
+	float dpi_scale = cg_get_dpi_scale();
+	render_text("Hello text!", 50, 50, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+	render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+	render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, abs(sin(t * 2.5f))), dpi_scale);
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers( window );
 }
@@ -212,9 +223,11 @@ bool user_init()
 
 	// init GL states
 	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
+	glEnable(GL_BLEND);
 	glEnable( GL_CULL_FACE );								// turn on backface culling
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
 	glEnable( GL_TEXTURE_2D );
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glActiveTexture( GL_TEXTURE0 );
 
 	// load the mesh

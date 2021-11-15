@@ -57,17 +57,21 @@
     <ClCompile Include="assimp_loader.cpp" />
     <ClCompile Include="gl\glad\glad.c" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="text.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="assimp_loader.h" />
     <ClInclude Include="cgmath.h" />
     <ClInclude Include="cgut2.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="trackball.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\bin\shaders\model.frag" />
     <None Include="..\bin\shaders\model.vert" />
+    <None Include="text.frag" />
+    <None Include="text.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

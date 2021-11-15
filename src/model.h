@@ -17,7 +17,7 @@ struct model_t
 inline std::vector<model_t> set_pos() {
 	std::vector<model_t> arr;
 	model_t m;
-	m = {vec3(5.0f,5.0f,0.0f),1.0f};//warehouse
+	m = {vec3(0.0f,0.0f,0.0f),1.0f};//warehouse
 	arr.emplace_back(m);
 	m = {vec3(0.0f,0.0f,1.0f),1.0f };//hero
 	arr.emplace_back(m);
