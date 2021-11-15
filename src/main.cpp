@@ -88,7 +88,7 @@ void update()
 	}
 	else {
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
-		//cam.view_matrix = mat4::look_at(vec3(0, -50, 100), vec3(0), vec3(0, 1, 0));
+		cam.view_matrix = mat4::look_at(vec3(0, -50, 100), vec3(0), vec3(0, 1, 0));
 	}
 
 	// build the model matrix for oscillating scale
@@ -234,7 +234,7 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
-
+	if (!init_text()) return false;
 	return true;
 }
 
