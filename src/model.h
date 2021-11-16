@@ -19,7 +19,7 @@ inline std::vector<model_t> set_pos() {
 	model_t m;
 	m = {vec3(0.0f,0.0f,0.0f),1.0f};//warehouse
 	arr.emplace_back(m);
-	m = {vec3(0.0f,0.0f,1.0f),1.0f };//hero
+	m = {vec3(0.0f,-7.5f,1.0f),1.0f };//hero
 	arr.emplace_back(m);
 	return arr;
 }

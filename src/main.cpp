@@ -4,6 +4,7 @@
 #include "trackball.h"
 #include "assimp_loader.h"
 #include "model.h"
+#include "map.h"
 
 //*******************************************************************
 // forward declarations for freetype text
@@ -15,8 +16,11 @@ void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, 
 static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
 static const char*	vert_shader_path = "shaders/model.vert";
 static const char*	frag_shader_path = "shaders/model.frag";
-static const char* mesh_warehouse = "mesh/Room/warehouse.obj";
+static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
+
+//*************************************
+
 
 //*************************************
 // common structures
@@ -32,6 +36,21 @@ struct camera
 	float	dNear = 1.0f;
 	float	dFar = 1000.0f;
 	mat4	projection_matrix;
+};
+struct light_t
+{
+	vec4	position = vec4(0.0f, 0.0f, 50.0f, 0.0f);   // spot light
+	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+};
+
+struct material_t
+{
+	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	float	shininess = 1000.0f;
 };
 
 //*************************************
@@ -50,13 +69,18 @@ bool	show_texcoord = false;
 bool	b_2d = false;
 float	t;
 auto	models = std::move(set_pos()); // positions of models
+auto	maps = std::move(create_grid());
 
 //*************************************
 // scene objects
 std::vector<mesh2*>		pMesh;
 camera		cam;
 trackball	tb;
-// custom function
+light_t		light;
+material_t	material;
+
+//*************************************
+// view function
 mat4 Ortho(float left, float right, float bottom, float top, float dnear, float dfar) {
 
 	mat4 v = {
@@ -67,7 +91,10 @@ mat4 Ortho(float left, float right, float bottom, float top, float dnear, float 
 	};
 	return v;
 }
-//*************************************
+
+// move character function
+
+
 //*************************************
 void update()
 {
@@ -88,20 +115,27 @@ void update()
 	}
 	else {
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
-		cam.view_matrix = mat4::look_at(vec3(0, -50, 100), vec3(0), vec3(0, 1, 0));
+		//cam.view_matrix = mat4::look_at(vec3(0, -50, 100), vec3(0), vec3(0, 1, 0));
 	}
 
 	// build the model matrix for oscillating scale
 	t = float(glfwGetTime());
-	float scale = 1.0f;
-	mat4 model_matrix = mat4::scale( scale, scale, scale );
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
-	uloc = glGetUniformLocation( program, "model_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, model_matrix );
+	
+	// setup light properties
+	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
+	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
 
-	// select the texture slot to bind
+	// setup material properties
+	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
+	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
 }
 
 void render()
@@ -112,49 +146,32 @@ void render()
 	// notify GL that we use our own program
 	glUseProgram( program );
 	glActiveTexture(GL_TEXTURE0);
+	int i = 0;
 	// bind vertex array object
-	glBindVertexArray( pMesh[0]->vertex_array );
-	models[0].update(t);
+	for (auto& m : models) {
+		glBindVertexArray(pMesh[i]->vertex_array);
+		m.update(t);
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, m.model_matrix);
+		for (size_t k = 0, kn = pMesh[i]->geometry_list.size(); k < kn; k++) {
+			geometry& g = pMesh[i]->geometry_list[k];
 
-	GLint uloc;
-	uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, models[0].model_matrix);
-	for( size_t k=0, kn= pMesh[0]->geometry_list.size(); k < kn; k++ ) {
-		geometry& g = pMesh[0]->geometry_list[k];
-		
-		if (g.mat->textures.diffuse) {
-			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
-			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-			
-		} else {
-			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
-			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+			if (g.mat->textures.diffuse) {
+				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+
+			}
+			else {
+				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+			}
+
+			// render vertices: trigger shader programs to process vertex data
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[i]->index_buffer);
+			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 		}
-
-		// render vertices: trigger shader programs to process vertex data
-		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, pMesh[0]->index_buffer );
-		glDrawElements( GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start*sizeof(GLuint)) );
-	}
-	glBindVertexArray(pMesh[1]->vertex_array);
-	models[1].update(t);
-	GLint uloc1;
-	uloc1 = glGetUniformLocation(program, "model_matrix");		if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, models[1].model_matrix);
-	for (size_t k = 0, kn = pMesh[1]->geometry_list.size(); k < kn; k++) {
-		geometry& g = pMesh[1]->geometry_list[k];
-
-		if (g.mat->textures.diffuse) {
-			glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-			glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
-			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-		}
-		else {
-			glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
-			glUniform1i(glGetUniformLocation(program, "use_texture"), false);
-		}
-
-		// render vertices: trigger shader programs to process vertex data
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[1]->index_buffer);
-		glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+		i++;
 	}
 	//text render
 	float dpi_scale = cg_get_dpi_scale();
@@ -194,6 +211,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
+		}
+		else if (key == GLFW_KEY_RIGHT) {
+			printf("fuck");
+		}
+		else if (key == GLFW_KEY_LEFT) {
+			printf("fuck");
+		}
+		else if (key == GLFW_KEY_UP) {
+			printf("fuck");
+		}
+		else if (key == GLFW_KEY_DOWN) {
+			printf("fuck");
 		}
 	}
 }
