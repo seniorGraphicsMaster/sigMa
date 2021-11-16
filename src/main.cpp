@@ -26,7 +26,7 @@ static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 // common structures
 struct camera
 {
-	vec3	eye = vec3( 0, -50, 100 );
+	vec3	eye = vec3( 0, -50, 200 );
 	vec3	at = vec3( 0, 0, 0 );
 	vec3	up = vec3( 0, 1, 0 );
 	mat4	view_matrix = mat4::look_at( eye, at, up );
@@ -71,6 +71,8 @@ float	t;
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 
+int		scene = 0;
+
 //*************************************
 // scene objects
 std::vector<mesh2*>		pMesh;
@@ -110,7 +112,7 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(models[1].center.y- 30.0f, models[1].center.y + 30.0f, models[1].center.z - 30.0f, models[1].center.z + 30.0f, 34.f, 400); // 보이는 영역
+		cam.projection_matrix = aspect_matrix * Ortho(models[1].center.y- 30.0f, models[1].center.y + 30.0f, models[1].center.z - 30.0f, models[1].center.z + 30.0f, 30.0f, 400); // 보이는 영역
 		cam.view_matrix = mat4::look_at(models[1].center + vec3(50, 0, 1), models[1].center, vec3( -1, 0, 0 )); // 시점 확정
 	}
 	else {
@@ -147,6 +149,7 @@ void render()
 	glUseProgram( program );
 	glActiveTexture(GL_TEXTURE0);
 	int i = 0;
+
 	// bind vertex array object
 	for (auto& m : models) {
 		glBindVertexArray(pMesh[i]->vertex_array);
@@ -156,6 +159,7 @@ void render()
 		for (size_t k = 0, kn = pMesh[i]->geometry_list.size(); k < kn; k++) {
 			geometry& g = pMesh[i]->geometry_list[k];
 
+			
 			if (g.mat->textures.diffuse) {
 				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
@@ -213,16 +217,16 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			b_2d = !b_2d;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			printf("fuck");
+			models[1].right_move(maps[scene]);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			printf("fuck");
+			models[1].left_move(maps[scene]);
 		}
 		else if (key == GLFW_KEY_UP) {
-			printf("fuck");
+			models[1].up_move(maps[scene]);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			printf("fuck");
+			models[1].down_move(maps[scene]);
 		}
 	}
 }

@@ -41,5 +41,5 @@ void main()
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l+v);	// the halfway vector
 	fragColor = use_texture ? texture( TEX, tc ) : diffuse;
-	fragColor = phong( l, n, h, fragColor );
+	//fragColor = phong( l, n, h, fragColor );
 }
