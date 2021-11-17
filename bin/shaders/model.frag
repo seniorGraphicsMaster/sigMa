@@ -37,7 +37,7 @@ void main()
 
 	vec3 n = normalize(norm);	// norm interpolated via rasterizer should be normalized again here
 	vec3 p = epos.xyz;			// 3D position of this fragment
-	vec3 l = normalize(lpos.xyz-(lpos.a==0.0?vec3(0):p));	// lpos.a==0 means directional light
+	vec3 l = normalize(lpos.xyz-(lpos.a==0.0?vec3(0):p));;	// lpos.a==0 means directional light
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l+v);	// the halfway vector
 	fragColor = use_texture ? texture( TEX, tc ) : diffuse;
