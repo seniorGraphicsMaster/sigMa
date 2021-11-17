@@ -18,6 +18,7 @@ static const char*	vert_shader_path = "shaders/model.vert";
 static const char*	frag_shader_path = "shaders/model.frag";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
+static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
 
 //*************************************
 
@@ -39,18 +40,18 @@ struct camera
 };
 struct light_t
 {
-	vec4	position = vec4(0.0f, 0.0f, 20.0f, 1.0f);   // spot light
-	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	position = vec4(0.0f, 0.0f, 30.0f, 1.0f);   // spot light
+	vec4	ambient = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
 struct material_t
 {
-	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	ambient = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	float	shininess = 1000.0f;
+	float	shininess = 2000.0f;
 };
 
 //*************************************
@@ -216,17 +217,36 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		{
 			b_2d = !b_2d;
 		}
+		else if (key == GLFW_KEY_A)
+		{
+			models[1].action = PUSH;
+		}
+		else if (key == GLFW_KEY_S)
+		{
+			models[1].action = PULL;
+		}
 		else if (key == GLFW_KEY_RIGHT) {
-			models[1].right_move(maps[scene]);
+			models[1].right_move(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			models[1].left_move(maps[scene]);
+			models[1].left_move(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			models[1].up_move(maps[scene]);
+			models[1].up_move(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			models[1].down_move(maps[scene]);
+			models[1].down_move(maps[scene], models);
+		}
+	}
+
+	if (action == GLFW_RELEASE) {
+		if (key == GLFW_KEY_A)
+		{
+			models[1].action = 0;
+		}
+		else if (key == GLFW_KEY_S)
+		{
+			models[1].action = 0;
 		}
 	}
 }
@@ -266,6 +286,9 @@ bool user_init()
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
+	pMesh.emplace_back(load_model(wood_box));
+	pMesh.emplace_back(load_model(wood_box));
+
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 	if (!init_text()) return false;
 	return true;
