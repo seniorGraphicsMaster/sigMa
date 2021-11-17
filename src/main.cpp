@@ -39,7 +39,7 @@ struct camera
 };
 struct light_t
 {
-	vec4	position = vec4(0.0f, 0.0f, 50.0f, 0.0f);   // spot light
+	vec4	position = vec4(0.0f, 0.0f, 20.0f, 1.0f);   // spot light
 	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -79,7 +79,7 @@ std::vector<mesh2*>		pMesh;
 camera		cam;
 trackball	tb;
 light_t		light;
-material_t	material;
+material_t	materials;
 
 //*************************************
 // view function
@@ -112,12 +112,12 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(models[1].center.y- 30.0f, models[1].center.y + 30.0f, models[1].center.z - 30.0f, models[1].center.z + 30.0f, 30.0f, 400); // 보이는 영역
-		cam.view_matrix = mat4::look_at(models[1].center + vec3(50, 0, 1), models[1].center, vec3( -1, 0, 0 )); // 시점 확정
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 10.5f, 400); // 보이는 영역
+		cam.view_matrix = mat4::look_at(vec3(50.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 	}
 	else {
+		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
-		//cam.view_matrix = mat4::look_at(vec3(0, -50, 100), vec3(0), vec3(0, 1, 0));
 	}
 
 	// build the model matrix for oscillating scale
@@ -134,10 +134,10 @@ void update()
 	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
 
 	// setup material properties
-	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, material.ambient);
-	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, material.diffuse);
-	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, material.specular);
-	glUniform1f(glGetUniformLocation(program, "shininess"), material.shininess);
+	glUniform4fv(glGetUniformLocation(program, "Ka"), 1, materials.ambient);
+	glUniform4fv(glGetUniformLocation(program, "Kd"), 1, materials.diffuse);
+	glUniform4fv(glGetUniformLocation(program, "Ks"), 1, materials.specular);
+	glUniform1f(glGetUniformLocation(program, "shininess"), materials.shininess);
 }
 
 void render()
