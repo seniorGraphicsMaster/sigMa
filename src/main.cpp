@@ -18,7 +18,7 @@ static const char*	vert_shader_path = "shaders/model.vert";
 static const char*	frag_shader_path = "shaders/model.frag";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
-
+static const char* hero_title = "images/hero.png";
 //*************************************
 
 
@@ -61,7 +61,8 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
-
+GLuint	TITLE = 0;			// RGB texture object
+GLuint vertex_array = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -149,6 +150,34 @@ void render()
 	glUseProgram( program );
 	glActiveTexture(GL_TEXTURE0);
 	int i = 0;
+	
+	if (scene == 0) {
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, TITLE);
+		glUniform1i(glGetUniformLocation(program, "TEX0"), 0);
+
+		glBindVertexArray(vertex_array);
+	}
+
+	if (scene == 1) {
+		float dpi_scale = cg_get_dpi_scale();
+		
+		render_text("My name is zetbot.. I'm vending machine..", 50, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 50, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 2) {
+		float dpi_scale = cg_get_dpi_scale();
+
+		render_text("I can't live in this house cleaning anymore! I'm going to escape!", 50, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 50, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
 
 	// bind vertex array object
 	for (auto& m : models) {
@@ -178,10 +207,10 @@ void render()
 		i++;
 	}
 	//text render
-	float dpi_scale = cg_get_dpi_scale();
-	render_text("Hello text!", 50, 50, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-	render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-	render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, abs(sin(t * 2.5f))), dpi_scale);
+	//float dpi_scale = cg_get_dpi_scale();
+	//render_text("Hello text!", 50, 50, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+	//render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+	//render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, abs(sin(t * 2.5f))), dpi_scale);
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers( window );
 }
@@ -208,10 +237,12 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
 	if(action==GLFW_PRESS)
 	{
-		if(key==GLFW_KEY_ESCAPE||key==GLFW_KEY_Q)	glfwSetWindowShouldClose( window, GL_TRUE );
-		else if(key==GLFW_KEY_H||key==GLFW_KEY_F1)	print_help();
-		else if(key==GLFW_KEY_HOME)					cam = camera();
-		else if(key==GLFW_KEY_T)					show_texcoord = !show_texcoord;
+		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
+		else if (key == GLFW_KEY_HOME)					cam = camera();
+		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
+		else if (key == GLFW_KEY_S)					scene = 1;
+		else if (key == GLFW_KEY_N)					scene++;
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
