@@ -29,6 +29,8 @@ struct model_t
 	void	right_move(map_t& cur_map, std::vector<model_t>& models);
 	void	up_move(map_t& cur_map, std::vector<model_t>& models);
 	void	down_move(map_t& cur_map, std::vector<model_t>& models);
+	void	left_move_2d(map_t& cur_map, std::vector<model_t>& models);
+	void	right_move_2d(map_t& cur_map, std::vector<model_t>& models);
 };
 
 inline std::vector<model_t> set_pos() {
@@ -45,16 +47,18 @@ inline std::vector<model_t> set_pos() {
 	return arr;
 }
 
-inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models){
+
+#pragma region 3d_move
+inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
 	vec2 next_pos = vec2(cur_pos.x - 1, cur_pos.y);
-	
+
 	//rotation
 	if (action == PULL) theta = PI / 2;
 	else theta = -PI / 2;
-	
+
 	//wall check
 	if (next_pos.x < 0) return;
-	
+
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (action != PUSH && next_val != CANMOVE) return;
@@ -64,7 +68,7 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models){
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x - 1, obj->cur_pos.y);
 		if (obj_next_pos.x < 0) return;
-		
+
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
 		if (obj_next_val != CANMOVE) return;
 
@@ -87,7 +91,7 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models){
 			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
 		}
 	}
-	
+
 	cur_pos = next_pos;
 	center.x -= 15.0f;
 }
@@ -96,7 +100,7 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 	vec2 next_pos = vec2(cur_pos.x + 1, cur_pos.y);
 
 	//rotation
-	if (action == PULL) theta = - PI / 2;
+	if (action == PULL) theta = -PI / 2;
 	else theta = PI / 2;
 
 	//wall check
@@ -111,9 +115,9 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x + 1, obj->cur_pos.y);
 		if (obj_next_pos.x > cur_map.grid.x - 1) return;
-		
+
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
-		 if(obj_next_val != CANMOVE) return;
+		if (obj_next_val != CANMOVE) return;
 
 		obj->cur_pos = obj_next_pos;
 		obj->center.x += 15.0f;
@@ -141,7 +145,7 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 }
 
 inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
-	
+
 	vec2 next_pos = vec2(cur_pos.x, cur_pos.y + 1);
 
 	//rotation
@@ -189,7 +193,7 @@ inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
 
 }
 inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
-	
+
 	vec2 next_pos = vec2(cur_pos.x, cur_pos.y - 1);
 
 	//rotation
@@ -208,7 +212,7 @@ inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x, obj->cur_pos.y - 1);
 		if (obj_next_pos.y < 0) return;
-		
+
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
 		if (obj_next_val != CANMOVE) return;
 
@@ -235,6 +239,44 @@ inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
 	cur_pos = next_pos;
 	center.y -= 15.0f;
 }
+#pragma endregion
+
+#pragma region 2d_move
+
+inline void model_t::left_move_2d(map_t& cur_map, std::vector<model_t>& models) {
+	vec2 next_pos = vec2(cur_pos.x, cur_pos.y - 1);
+
+	//rotation
+	theta = 0;
+	
+	//line check
+	for (int i = 0; i < cur_map.grid.x; i++) {
+		if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return;
+	}
+
+	cur_pos = next_pos;
+	center.y -= 15.0f;
+}
+
+inline void model_t::right_move_2d(map_t& cur_map, std::vector<model_t>& models) {
+	vec2 next_pos = vec2(cur_pos.x, cur_pos.y + 1);
+
+	//rotation
+	theta = PI;
+	
+	//line check
+	for (int i = 0; i < cur_map.grid.x; i++) {
+		if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return;
+	}
+
+	cur_pos = next_pos;
+	center.y += 15.0f;
+}
+
+#pragma endregion
+
+
+
 
 inline void model_t::update(float t)
 {

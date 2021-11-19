@@ -75,6 +75,8 @@ auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
+
+model_t* hero;
 //*************************************
 // holder of vertices and indices of a unit wall
 std::vector<vertex>	unit_wall_vertices;
@@ -163,7 +165,7 @@ void update()
 		cam.view_matrix = mat4::look_at(vec3(50.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 	}
 	else {
-		//cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
+		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
 	}
 
@@ -280,34 +282,36 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		}
 		else if (key == GLFW_KEY_A)
 		{
-			models[1].action = PUSH;
+			if (hero->action != PULL) hero->action = PUSH;
 		}
 		else if (key == GLFW_KEY_S)
 		{
-			models[1].action = PULL;
+			if(hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			models[1].right_move(maps[scene], models);
+			if(!b_2d) hero->right_move(maps[scene], models);
+			else hero->right_move_2d(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			models[1].left_move(maps[scene], models);
+			if (!b_2d) hero->left_move(maps[scene], models);
+			else hero->left_move_2d(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			models[1].up_move(maps[scene], models);
+			if (!b_2d) hero->up_move(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			models[1].down_move(maps[scene], models);
+			if (!b_2d) hero->down_move(maps[scene], models);
 		}
 	}
 
 	if (action == GLFW_RELEASE) {
 		if (key == GLFW_KEY_A)
 		{
-			models[1].action = 0;
+			if (models[1].action != PULL) models[1].action = 0;
 		}
 		else if (key == GLFW_KEY_S)
 		{
-			models[1].action = 0;
+			if (models[1].action != PUSH) models[1].action = 0;
 		}
 	}
 }
@@ -354,6 +358,8 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_hero));
 	pMesh.emplace_back(load_model(wood_box));
 	pMesh.emplace_back(load_model(wood_box));
+
+	hero = &models[1];
 
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 	if (!init_text()) return false;
