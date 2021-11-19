@@ -19,6 +19,7 @@ static const char*	vert_shader_path = "shaders/model.vert";
 static const char*	frag_shader_path = "shaders/model.frag";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
+static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
@@ -40,18 +41,18 @@ struct camera
 };
 struct light_t
 {
-	vec4	position = vec4(0.0f, 0.0f, 20.0f, 1.0f);   // spot light
-	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	position = vec4(0.0f, 0.0f, 30.0f, 1.0f);   // spot light
+	vec4	ambient = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 };
 
 struct material_t
 {
-	vec4	ambient = vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	vec4	ambient = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	float	shininess = 1000.0f;
+	float	shininess = 2000.0f;
 };
 
 //*************************************
@@ -74,9 +75,13 @@ auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
+
+model_t* hero;
+
 //*************************************
 // holder of vertices and indices of a unit wall
 std::vector<vertex>	unit_wall_vertices;
+
 //*************************************
 // scene objects
 std::vector<mesh2*>		pMesh;
@@ -84,6 +89,33 @@ camera		cam;
 trackball	tb;
 light_t		light;
 material_t	materials;
+
+#pragma region GAME_MANAGE
+
+//if the return value is 1, game over
+int game_over_chk(int type) {
+	map_t cur_map = maps[scene];
+	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
+	
+	switch (type) {
+	case 0:
+
+		for (int i = 0; i < cur_map.grid.x; i++) {
+			if ((int)hero_pos.x == i) break;
+			else if(cur_map.map[i][(int)hero_pos.y] != CANMOVE){
+				return 1;
+			}
+		}
+		break;
+	
+	default: break;
+	}
+
+	return 0 ;
+}
+
+
+#pragma endregion
 
 //*************************************
 // view function
@@ -99,7 +131,7 @@ mat4 Ortho(float left, float right, float bottom, float top, float dnear, float 
 }
 
 // create wall function
-std::vector<vertex> create_wall() // importent
+std::vector<vertex> create_wall() // important
 {
 	std::vector<vertex> v; // origin
 	float h = 50.0f;
@@ -162,7 +194,7 @@ void update()
 		cam.view_matrix = mat4::look_at(vec3(50.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 	}
 	else {
-		//cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
+		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
 	}
 
@@ -276,18 +308,42 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
+			if (b_2d) {
+				if (game_over_chk(0)) printf("Game Over");
+			}
+		}
+		else if (key == GLFW_KEY_A)
+		{
+			if (hero->action != PULL) hero->action = PUSH;
+		}
+		else if (key == GLFW_KEY_S)
+		{
+			if(hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			models[1].right_move(maps[scene]);
+			if(!b_2d) hero->right_move(maps[scene], models);
+			else hero->right_move_2d(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			models[1].left_move(maps[scene]);
+			if (!b_2d) hero->left_move(maps[scene], models);
+			else hero->left_move_2d(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			models[1].up_move(maps[scene]);
+			if (!b_2d) hero->up_move(maps[scene], models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			models[1].down_move(maps[scene]);
+			if (!b_2d) hero->down_move(maps[scene], models);
+		}
+	}
+
+	if (action == GLFW_RELEASE) {
+		if (key == GLFW_KEY_A)
+		{
+			if (hero->action != PULL) hero->action = 0;
+		}
+		else if (key == GLFW_KEY_S)
+		{
+			if (hero->action != PUSH) hero->action = 0;
 		}
 	}
 }
@@ -332,6 +388,11 @@ bool user_init()
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
+	pMesh.emplace_back(load_model(wood_box));
+	pMesh.emplace_back(load_model(wood_box));
+
+	hero = &models[1];
+
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 	if (!init_text()) return false;
 	return true;
