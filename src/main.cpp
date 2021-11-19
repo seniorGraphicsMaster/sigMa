@@ -77,9 +77,11 @@ auto	walls = std::move(set_wall());
 int		scene = 0;
 
 model_t* hero;
+
 //*************************************
 // holder of vertices and indices of a unit wall
 std::vector<vertex>	unit_wall_vertices;
+
 //*************************************
 // scene objects
 std::vector<mesh2*>		pMesh;
@@ -87,6 +89,33 @@ camera		cam;
 trackball	tb;
 light_t		light;
 material_t	materials;
+
+#pragma region GAME_MANAGE
+
+//if the return value is 1, game over
+int game_over_chk(int type) {
+	map_t cur_map = maps[scene];
+	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
+	
+	switch (type) {
+	case 0:
+
+		for (int i = 0; i < cur_map.grid.x; i++) {
+			if ((int)hero_pos.x == i) break;
+			else if(cur_map.map[i][(int)hero_pos.y] != CANMOVE){
+				return 1;
+			}
+		}
+		break;
+	
+	default: break;
+	}
+
+	return 0 ;
+}
+
+
+#pragma endregion
 
 //*************************************
 // view function
@@ -102,7 +131,7 @@ mat4 Ortho(float left, float right, float bottom, float top, float dnear, float 
 }
 
 // create wall function
-std::vector<vertex> create_wall() // importent
+std::vector<vertex> create_wall() // important
 {
 	std::vector<vertex> v; // origin
 	float h = 50.0f;
@@ -279,6 +308,9 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
+			if (b_2d) {
+				if (game_over_chk(0)) printf("Game Over");
+			}
 		}
 		else if (key == GLFW_KEY_A)
 		{
@@ -307,11 +339,11 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 	if (action == GLFW_RELEASE) {
 		if (key == GLFW_KEY_A)
 		{
-			if (models[1].action != PULL) models[1].action = 0;
+			if (hero->action != PULL) hero->action = 0;
 		}
 		else if (key == GLFW_KEY_S)
 		{
-			if (models[1].action != PUSH) models[1].action = 0;
+			if (hero->action != PUSH) hero->action = 0;
 		}
 	}
 }
