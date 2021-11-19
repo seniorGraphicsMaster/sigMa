@@ -67,6 +67,7 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="trackball.h" />
+    <ClInclude Include="wall.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\bin\shaders\model.frag" />
