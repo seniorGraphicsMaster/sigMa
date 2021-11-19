@@ -49,6 +49,9 @@
     <ClInclude Include="map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="wall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\bin\shaders\model.frag">

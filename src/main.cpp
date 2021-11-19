@@ -5,6 +5,7 @@
 #include "assimp_loader.h"
 #include "model.h"
 #include "map.h"
+#include "wall.h"
 
 //*******************************************************************
 // forward declarations for freetype text
@@ -20,7 +21,7 @@ static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 
 //*************************************
-
+static const char* wall_warehouse = "texture/wall_warehouse.jpg";
 
 //*************************************
 // common structures
@@ -61,7 +62,8 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 //*************************************
 // OpenGL objects
 GLuint	program	= 0;	// ID holder for GPU program
-
+GLuint	wall_vertex_array = 0;
+GLuint	WALL_warehouse = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -70,9 +72,11 @@ bool	b_2d = false;
 float	t;
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
-
+auto	walls = std::move(set_wall());
 int		scene = 0;
-
+//*************************************
+// holder of vertices and indices of a unit wall
+std::vector<vertex>	unit_wall_vertices;
 //*************************************
 // scene objects
 std::vector<mesh2*>		pMesh;
@@ -94,8 +98,50 @@ mat4 Ortho(float left, float right, float bottom, float top, float dnear, float 
 	return v;
 }
 
-// move character function
+// create wall function
+std::vector<vertex> create_wall() // importent
+{
+	std::vector<vertex> v; // origin
+	float h = 50.0f;
+	float norm = sqrt(1+h*h);
+	v.push_back({ vec3(0, 0.5f,-1.0f * h / 2.0f), vec3(0, 1 / norm,-1.0f * h / norm), vec2(0,0) });
+	v.push_back({ vec3(0, -0.5f,-1.0f * h / 2.0f), vec3(0, -1.0f / norm,-1.0f * h / norm), vec2(1,0) });
+	v.push_back({ vec3(0, -0.5f, h / 2.0f), vec3(0, -1.0f / norm, h / norm), vec2(1,1) });
+	v.push_back({ vec3(0, 0.5f, h / 2.0f), vec3(0, 1 / norm, h / norm), vec2(0,1) });
 
+	return v;
+}
+void update_vertex_buffer(const std::vector<vertex>& vertices)
+{
+	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
+	static GLuint index_buffer = 0;		// ID holder for index buffer
+	// clear and create new buffers
+	if (vertex_buffer)	glDeleteBuffers(1, &vertex_buffer);	vertex_buffer = 0;
+	if (index_buffer)	glDeleteBuffers(1, &index_buffer);	index_buffer = 0;
+	// check exceptions
+	if (vertices.empty()) { printf("[error] vertices is empty.\n"); return; }
+	// create buffers
+	std::vector<uint> indices;
+	indices.push_back(0);
+	indices.push_back(2);
+	indices.push_back(1);
+	indices.push_back(0);
+	indices.push_back(3);
+	indices.push_back(2);
+	// generation of vertex buffer: use vertices as it is
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), &vertices[0], GL_STATIC_DRAW);
+	// geneation of index buffer
+	glGenBuffers(1, &index_buffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), &indices[0], GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (wall_vertex_array) glDeleteVertexArrays(1, &wall_vertex_array);
+	wall_vertex_array = cg_create_vertex_array(vertex_buffer, index_buffer);
+	if (!wall_vertex_array) { printf("%s(): failed to create vertex aray\n", __func__); return; }
+}
 
 //*************************************
 void update()
@@ -116,7 +162,7 @@ void update()
 		cam.view_matrix = mat4::look_at(vec3(50.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 	}
 	else {
-		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
+		//cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
 	}
 
@@ -164,11 +210,13 @@ void render()
 				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+				glUniform1i(glGetUniformLocation(program, "mode"), 0);
 
 			}
 			else {
 				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
 				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+				glUniform1i(glGetUniformLocation(program, "mode"), 0);
 			}
 
 			// render vertices: trigger shader programs to process vertex data
@@ -176,6 +224,19 @@ void render()
 			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
 		}
 		i++;
+	}
+	glBindVertexArray(wall_vertex_array);
+	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
+	for (auto& w : walls) {
+		w.setSize();
+		GLint uloc;
+		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
+		glUniform1i(glGetUniformLocation(program, "TEX"), 1);
+		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+		glUniform1i(glGetUniformLocation(program, "mode"), 1);
+
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
 	}
 	//text render
 	float dpi_scale = cg_get_dpi_scale();
@@ -262,6 +323,11 @@ bool user_init()
 	glEnable( GL_TEXTURE_2D );
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glActiveTexture( GL_TEXTURE0 );
+
+	unit_wall_vertices = std::move(create_wall());
+	update_vertex_buffer(unit_wall_vertices);
+	WALL_warehouse = cg_create_texture(wall_warehouse, true); if (!WALL_warehouse) return false;
+
 
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));

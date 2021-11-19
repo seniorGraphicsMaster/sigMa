@@ -22,6 +22,7 @@ uniform vec4	Ka, Kd, Ks;
 uniform sampler2D TEX;
 uniform bool use_texture;
 uniform vec4 diffuse;
+uniform int mode;
 
 vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 {
@@ -41,5 +42,7 @@ void main()
 	vec3 v = normalize(-p);		// eye-epos = vec3(0)-epos
 	vec3 h = normalize(l+v);	// the halfway vector
 	fragColor = use_texture ? texture( TEX, tc ) : diffuse;
-	fragColor = phong( l, n, h, fragColor );
+	if(mode==0){
+		fragColor = phong( l, n, h, fragColor );
+	}
 }
