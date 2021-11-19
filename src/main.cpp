@@ -167,15 +167,39 @@ void render()
 	if (scene == 1) {
 		float dpi_scale = cg_get_dpi_scale();
 		
-		render_text("My name is zetbot.. I'm vending machine..", 50, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 50, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
 	}
 
 	if (scene == 2) {
 		float dpi_scale = cg_get_dpi_scale();
 
-		render_text("I can't live in this house cleaning anymore! I'm going to escape!", 50, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 50, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 3) {
+		float dpi_scale = cg_get_dpi_scale();
+
+		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 4) {
+		float dpi_scale = cg_get_dpi_scale();
+
+		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 5) {
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
 	}
 
 
@@ -207,10 +231,7 @@ void render()
 		i++;
 	}
 	//text render
-	//float dpi_scale = cg_get_dpi_scale();
-	//render_text("Hello text!", 50, 50, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-	//render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-	//render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, abs(sin(t * 2.5f))), dpi_scale);
+	
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers( window );
 }
