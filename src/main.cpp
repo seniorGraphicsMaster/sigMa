@@ -19,7 +19,6 @@ static const char*	vert_shader_path = "shaders/model.vert";
 static const char*	frag_shader_path = "shaders/model.frag";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
-static const char* hero_title = "images/hero.png";
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
 
@@ -201,12 +200,7 @@ void render()
 		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
 		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, TITLE);
-		glUniform1i(glGetUniformLocation(program, "TEX0"), 0);
-
-		glBindVertexArray(vertex_array);
+	
 	}
 
 	if (scene == 1) {
