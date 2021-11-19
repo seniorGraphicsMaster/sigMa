@@ -227,6 +227,53 @@ void render()
 	glUseProgram( program );
 	glActiveTexture(GL_TEXTURE0);
 	int i = 0;
+	
+	if (scene == 0) {
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	
+	}
+
+	if (scene == 1) {
+		float dpi_scale = cg_get_dpi_scale();
+		
+		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 2) {
+		float dpi_scale = cg_get_dpi_scale();
+
+		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 3) {
+		float dpi_scale = cg_get_dpi_scale();
+
+		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 4) {
+		float dpi_scale = cg_get_dpi_scale();
+
+		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
+	if (scene == 5) {
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+	}
+
 
 	// bind vertex array object
 	for (auto& m : models) {
@@ -271,10 +318,7 @@ void render()
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
 	}
 	//text render
-	float dpi_scale = cg_get_dpi_scale();
-	render_text("Hello text!", 50, 50, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-	render_text("I love Computer Graphics!", 100, 125, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-	render_text("Blinking text here", 100, 155, 0.6f, vec4(0.5f, 0.7f, 0.7f, abs(sin(t * 2.5f))), dpi_scale);
+	
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers( window );
 }
@@ -301,10 +345,12 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 {
 	if(action==GLFW_PRESS)
 	{
-		if(key==GLFW_KEY_ESCAPE||key==GLFW_KEY_Q)	glfwSetWindowShouldClose( window, GL_TRUE );
-		else if(key==GLFW_KEY_H||key==GLFW_KEY_F1)	print_help();
-		else if(key==GLFW_KEY_HOME)					cam = camera();
-		else if(key==GLFW_KEY_T)					show_texcoord = !show_texcoord;
+		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
+		else if (key == GLFW_KEY_HOME)					cam = camera();
+		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
+		else if (key == GLFW_KEY_S)					scene = 1;
+		else if (key == GLFW_KEY_N)					scene++;
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
