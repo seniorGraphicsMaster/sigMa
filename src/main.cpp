@@ -397,7 +397,7 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
-		else if (key == GLFW_KEY_N)					scene++;
+		else if (key == GLFW_KEY_N && scene != 0 && scene < 6)					scene++;
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
