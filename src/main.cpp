@@ -414,18 +414,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			if(hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			if(!b_2d) hero->right_move(maps[scene], models);
-			else hero->right_move_2d(maps[scene], models);
+			if(!b_2d) hero->right_move(maps[0], models);
+			else hero->right_move_2d(maps[0], models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			if (!b_2d) hero->left_move(maps[scene], models);
-			else hero->left_move_2d(maps[scene], models);
+			if (!b_2d) hero->left_move(maps[0], models);
+			else hero->left_move_2d(maps[0], models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			if (!b_2d) hero->up_move(maps[scene], models);
+			if (!b_2d) hero->up_move(maps[0], models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			if (!b_2d) hero->down_move(maps[scene], models);
+			if (!b_2d) hero->down_move(maps[0], models);
 		}
 	}
 
