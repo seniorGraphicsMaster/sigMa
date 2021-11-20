@@ -60,10 +60,10 @@
     <None Include="..\bin\shaders\model.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="text.vert">
+    <None Include="..\bin\shaders\text.frag">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="text.frag">
+    <None Include="..\bin\shaders\text.vert">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>
