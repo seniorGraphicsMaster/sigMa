@@ -66,5 +66,11 @@
     <None Include="..\bin\shaders\text.vert">
       <Filter>Shader Files</Filter>
     </None>
+    <None Include="..\bin\shaders\skybox.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\bin\shaders\skybox.vert">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

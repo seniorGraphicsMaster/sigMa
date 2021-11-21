@@ -21,6 +21,10 @@ static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
 
+
+static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
+static const char* frag_background_path = "shaders/skybox.frag";
+
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
 
@@ -73,6 +77,10 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 GLuint	program	= 0;	// ID holder for GPU program
 GLuint	wall_vertex_array = 0;
 GLuint	WALL_warehouse = 0;
+
+GLuint		VAO_BACKGROUND;			// vertex array for text objects
+GLuint		program_background;	// GPU program for text render
+
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -85,6 +93,8 @@ auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
 
+std::vector<std::string> skyboxes = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
+GLuint skyboxTexture;
 model_t* hero;
 
 //*************************************
@@ -152,7 +162,35 @@ std::string LeftTime(float t) {
 	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
 	return s;
 }
+unsigned int loadCubemap(std::vector<std::string> faces) {
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
 #pragma endregion
 
 //*************************************
@@ -261,11 +299,18 @@ void render()
 {
 	// clear screen (with background color) and clear depth buffer
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	
+	glUseProgram(program_background);
+	glDepthMask(GL_FALSE);
+	glActiveTexture(GL_TEXTURE0);
+	GLint uloc1;
+	uloc1 = glGetUniformLocation(program_background, "view_matrix");			if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, cam.view_matrix);
+	uloc1 = glGetUniformLocation(program_background, "projection_matrix");	if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar));
+	glBindVertexArray(VAO_BACKGROUND);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDepthMask(GL_TRUE);
 	// notify GL that we use our own program
 	glUseProgram( program );
-	
-	
 	if (scene == 0) {
 		float dpi_scale = cg_get_dpi_scale();
 		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
@@ -459,6 +504,65 @@ void motion( GLFWwindow* window, double x, double y )
 	cam.view_matrix = tb.update( npos );
 }
 
+bool init_background()
+{
+	program_background = cg_create_program(vert_background_path, frag_background_path);
+	if (!program_background) return false;
+
+	float vertices[] = {
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
+	};
+
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	VAO_BACKGROUND = cg_create_vertex_array(vertex_buffer); if (!VAO_BACKGROUND) { printf("%s(): VAO==nullptr\n", __func__); return false; }
+	skyboxTexture = loadCubemap(skyboxes);
+	return true;
+}
+
 bool user_init()
 {
 	// log hotkeys
@@ -488,6 +592,7 @@ bool user_init()
 
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 	if (!init_text()) return false;
+	if (!init_background()) return false;
 	return true;
 }
 
