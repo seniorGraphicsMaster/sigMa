@@ -27,6 +27,7 @@ static const char* frag_background_path = "shaders/skybox.frag";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
+static const char* object_door = "texture/door.jpg";
 
 //*************************************
 // common structures
@@ -45,7 +46,8 @@ struct camera
 };
 struct light_t
 {
-	vec4	position = vec4(0.0f, 0.0f, 30.0f, 1.0f);   // spot light
+	vec4	position = vec4(0.0f, 0.0f, 50.0f, 1.0f);   // spot light
+	vec4	position_2d = vec4(100.0f, 0.0f, 0.0f, 0.0f);
 	vec4	ambient = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -77,6 +79,7 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 GLuint	program	= 0;	// ID holder for GPU program
 GLuint	wall_vertex_array = 0;
 GLuint	WALL_warehouse = 0;
+GLuint	DOOR = 1;
 
 GLuint		VAO_BACKGROUND;			// vertex array for text objects
 GLuint		program_background;	// GPU program for text render
@@ -113,7 +116,7 @@ herostate	hero_state;
 
 //if the return value is 1, game over
 int game_over_chk(int type) {
-	map_t cur_map = maps[scene];
+	map_t cur_map = maps[0];
 	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
 	
 	switch (type) {
@@ -268,10 +271,12 @@ void update()
 		};
 		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 300); // 보이는 영역
 		cam.view_matrix = mat4::look_at(vec3(200.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
+		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
 		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
+		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	}
 
 	// build the model matrix for oscillating scale
@@ -283,7 +288,6 @@ void update()
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
 	
 	// setup light properties
-	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
 	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
@@ -391,15 +395,19 @@ void render()
 	glBindVertexArray(wall_vertex_array);
 	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
 	glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
+	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, DOOR);
+	i = 1;
 	for (auto& w : walls) {
 		w.setSize();
 		GLint uloc;
 		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
-		glUniform1i(glGetUniformLocation(program, "TEX"), 1);
+		glUniform1i(glGetUniformLocation(program, "TEX"), i);
 		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 		glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
+		i++;
 	}
 	if (scene == 6) {
 		pause = false;
@@ -459,18 +467,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			if(hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			if(!b_2d) hero->right_move(maps[scene], models);
-			else hero->right_move_2d(maps[scene], models);
+			if(!b_2d) hero->right_move(maps[0], models);
+			else hero->right_move_2d(maps[0], models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			if (!b_2d) hero->left_move(maps[scene], models);
-			else hero->left_move_2d(maps[scene], models);
+			if (!b_2d) hero->left_move(maps[0], models);
+			else hero->left_move_2d(maps[0], models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			if (!b_2d) hero->up_move(maps[scene], models);
+			if (!b_2d) hero->up_move(maps[0], models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			if (!b_2d) hero->down_move(maps[scene], models);
+			if (!b_2d) hero->down_move(maps[0], models);
 		}
 	}
 
@@ -580,7 +588,7 @@ bool user_init()
 	unit_wall_vertices = std::move(create_wall());
 	update_vertex_buffer(unit_wall_vertices);
 	WALL_warehouse = cg_create_texture(wall_warehouse, true); if (!WALL_warehouse) return false;
-
+	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
 
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
