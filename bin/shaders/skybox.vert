@@ -6,6 +6,5 @@ uniform mat4 view_matrix;
 void main() 
 {
 	tc = position;
-	gl_Position = projection_matrix * view_matrix * vec4(position, 1.0);
-
+	gl_Position = projection_matrix * view_matrix * vec4(position*400, 1.0);
 }
