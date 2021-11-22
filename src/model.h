@@ -12,6 +12,7 @@
 struct model_t
 {
 	//init var
+	int		id;
 	vec3	center=vec3(0);		// 2D position for translation
 	float	scale;
 
@@ -36,14 +37,13 @@ struct model_t
 inline std::vector<model_t> set_pos() {
 	std::vector<model_t> arr;
 	model_t m;
-	m = {vec3(0.0f,0.0f,0.0f),1.0f};//warehouse
+	m = {0, vec3(0.0f,0.0f,0.0f), 1.0f};//warehouse
 	arr.emplace_back(m);
-	m = {vec3(0.0f,-7.5f,1.0f),1.0f, vec2(2,4)};//hero
+	m = {1, vec3(0.0f,-7.5f,1.0f),1.0f, vec2(2,4)};//hero
 	arr.emplace_back(m);
-	m = { vec3(-15.0f,-22.5f,1.0f),1.0f, vec2(1,3) };//wood_box
+	m = {2, vec3(-15.0f,-22.5f,1.0f),1.0f, vec2(1,3) };//wood_box
 	arr.emplace_back(m);
-	m = { vec3(15.0f, 22.5f,1.0f),1.0f, vec2(3,6) };//wood_box
-	arr.emplace_back(m);
+	m = {3, vec3(15.0f, 22.5f,1.0f),1.0f, vec2(3,6) };//wood_box
 	return arr;
 }
 

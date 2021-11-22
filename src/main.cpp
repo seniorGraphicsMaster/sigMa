@@ -20,6 +20,7 @@ static const char*	frag_shader_path = "shaders/model.frag";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
+static const char* mesh_living = "mesh/Room/living/living.obj";
 
 
 static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
@@ -112,7 +113,9 @@ trackball	tb;
 light_t		light;
 material_t	materials;
 herostate	hero_state;
-#pragma region GAME_MANAGE
+
+
+#pragma region GAME_MANAGE  //Game over check
 
 //if the return value is 1, game over
 int game_over_chk(int type) {
@@ -196,6 +199,55 @@ GLuint loadCubemap(std::vector<std::string> faces) {
 }
 #pragma endregion
 
+#pragma region Scenes
+
+void load_scene_start(int scene) {
+	
+	float dpi_scale = cg_get_dpi_scale();
+
+	switch (scene) {
+	case 0:
+		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 1:
+		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 2:
+		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 3:
+		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 4:
+		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 5:
+		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	default:
+		break;
+	}
+	
+	return;
+}
+
+void load_scene_game(int scene) {
+
+}
+#pragma endregion
+
+
 //*************************************
 // view function
 mat4 Ortho(float left, float right, float bottom, float top, float dnear, float dfar) {
@@ -222,6 +274,7 @@ std::vector<vertex> create_wall() // important
 
 	return v;
 }
+
 void update_vertex_buffer(const std::vector<vertex>& vertices)
 {
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
@@ -274,7 +327,7 @@ void update()
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
-		//cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
+		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	}
@@ -299,10 +352,11 @@ void update()
 	glUniform1f(glGetUniformLocation(program, "shininess"), materials.shininess);
 }
 
-void render()
-{
+#pragma region Render
+
+void render_init() {
 	// clear screen (with background color) and clear depth buffer
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDepthMask(GL_FALSE);
 	glActiveTexture(GL_TEXTURE0);
 	glUseProgram(program_background);
@@ -313,204 +367,106 @@ void render()
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
-	// notify GL that we use our own program
-	
-	glUseProgram( program );
-	if (scene == 0) {
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	
-	}
 
-	if (scene == 1) {
-		float dpi_scale = cg_get_dpi_scale();
-		
-		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 2) {
-		float dpi_scale = cg_get_dpi_scale();
-
-		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 3) {
-		float dpi_scale = cg_get_dpi_scale();
-
-		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 4) {
-		float dpi_scale = cg_get_dpi_scale();
-
-		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 5) {
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-	
-	int i = 0;
-	glActiveTexture(GL_TEXTURE0);
-	// bind vertex array object
-	for (auto& m : models) {
-		glBindVertexArray(pMesh[i]->vertex_array);
-		m.update(t);
-		GLint uloc;
-		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, m.model_matrix);
-		for (size_t k = 0, kn = pMesh[i]->geometry_list.size(); k < kn; k++) {
-			geometry& g = pMesh[i]->geometry_list[k];
-
-			
-			if (g.mat->textures.diffuse) {
-				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
-				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-				glUniform1i(glGetUniformLocation(program, "mode"), 0);
-
-			}
-			else {
-				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
-				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
-				glUniform1i(glGetUniformLocation(program, "mode"), 0);
-			}
-
-			// render vertices: trigger shader programs to process vertex data
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[i]->index_buffer);
-			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
-		}
-		i++;
-	}
-	glBindVertexArray(wall_vertex_array);
-	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
-	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, DOOR);
-	i = 1;
-	for (auto& w : walls) {
-		w.setSize();
-		GLint uloc;
-		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
-		glUniform1i(glGetUniformLocation(program, "TEX"), i);
-		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-		glUniform1i(glGetUniformLocation(program, "mode"), 1);
-
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
-		i++;
-	}
-	if (scene == 6) {
-		pause = false;
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		//render_text("Left time: ", 100, 100, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-	}
-	
-	// swap front and back buffers, and display to screen
-	glfwSwapBuffers( window );
 }
 
-void reshape( GLFWwindow* window, int width, int height )
+void render()
+{
+
+	render_init();
+
+	// notify GL that we use our own program
+	glUseProgram(program);
+
+	// scene < 6 (game story)
+	load_scene_start(scene);
+
+	if (scene > 5) {
+
+		int i = 0;
+		glActiveTexture(GL_TEXTURE0);
+		// bind vertex array object
+		for (auto& m : models) {
+			glBindVertexArray(pMesh[m.id]->vertex_array);
+			m.update(t);
+			GLint uloc;
+			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, m.model_matrix);
+			for (size_t k = 0, kn = pMesh[m.id]->geometry_list.size(); k < kn; k++) {
+				geometry& g = pMesh[m.id]->geometry_list[k];
+
+
+				if (g.mat->textures.diffuse) {
+					glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+					glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+					glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+					glUniform1i(glGetUniformLocation(program, "mode"), 0);
+
+				}
+				else {
+					glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+					glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+					glUniform1i(glGetUniformLocation(program, "mode"), 0);
+				}
+
+				// render vertices: trigger shader programs to process vertex data
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[m.id]->index_buffer);
+				glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+			}
+			i++;
+		}
+		glBindVertexArray(wall_vertex_array);
+		glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
+		glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
+		glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+		glBindTexture(GL_TEXTURE_2D, DOOR);
+		i = 1;
+		for (auto& w : walls) {
+			w.setSize();
+			GLint uloc;
+			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
+			glUniform1i(glGetUniformLocation(program, "TEX"), i);
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+			glUniform1i(glGetUniformLocation(program, "mode"), 1);
+
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
+			i++;
+		}
+		if (scene == 6) {
+			pause = false;
+			float dpi_scale = cg_get_dpi_scale();
+			render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			//render_text("Left time: ", 100, 100, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		}
+	}
+
+	// swap front and back buffers, and display to screen
+	glfwSwapBuffers(window);
+}
+
+
+#pragma endregion
+
+#pragma region Initialize
+
+void reshape(GLFWwindow* window, int width, int height)
 {
 	// set current viewport in pixels (win_x, win_y, win_width, win_height)
 	// viewport: the window area that are affected by rendering 
-	window_size = ivec2(width,height);
-	glViewport( 0, 0, width, height );
+	window_size = ivec2(width, height);
+	glViewport(0, 0, width, height);
 }
 
 void print_help()
 {
-	printf( "[help]\n" );
-	printf( "- press ESC or 'q' to terminate the program\n" );
-	printf( "- press F1 or 'h' to see help\n" );
-	printf( "- press Home to reset camera\n" );
-	printf( "- press 'd' to toggle between OBJ format and 3DS format\n" );
-	printf( "\n" );
-}
-
-void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
-{
-	if(action==GLFW_PRESS)
-	{
-		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
-		else if (key == GLFW_KEY_HOME)					cam = camera();
-		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
-		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
-		else if (key == GLFW_KEY_N && scene != 0 && scene < 6)					scene++;
-		else if (key == GLFW_KEY_R)
-		{
-			b_2d = !b_2d;
-			if (b_2d) {
-				if (game_over_chk(0)) printf("Game Over");
-			}
-		}
-		else if (key == GLFW_KEY_A)
-		{
-			if (hero->action != PULL) hero->action = PUSH;
-		}
-		else if (key == GLFW_KEY_S)
-		{
-			if(hero->action != PUSH) hero->action = PULL;
-		}
-		else if (key == GLFW_KEY_RIGHT) {
-			if(!b_2d) hero->right_move(maps[0], models);
-			else hero->right_move_2d(maps[0], models);
-		}
-		else if (key == GLFW_KEY_LEFT) {
-			if (!b_2d) hero->left_move(maps[0], models);
-			else hero->left_move_2d(maps[0], models);
-		}
-		else if (key == GLFW_KEY_UP) {
-			if (!b_2d) hero->up_move(maps[0], models);
-		}
-		else if (key == GLFW_KEY_DOWN) {
-			if (!b_2d) hero->down_move(maps[0], models);
-		}
-	}
-
-	if (action == GLFW_RELEASE) {
-		if (key == GLFW_KEY_A)
-		{
-			if (hero->action != PULL) hero->action = 0;
-		}
-		else if (key == GLFW_KEY_S)
-		{
-			if (hero->action != PUSH) hero->action = 0;
-		}
-	}
-}
-
-void mouse( GLFWwindow* window, int button, int action, int mods )
-{
-	if(button==GLFW_MOUSE_BUTTON_LEFT)
-	{
-		dvec2 pos; glfwGetCursorPos(window,&pos.x,&pos.y);
-		vec2 npos = cursor_to_ndc( pos, window_size );
-		if(action==GLFW_PRESS)			tb.begin( cam.view_matrix, npos );
-		else if(action==GLFW_RELEASE)	tb.end();
-	}
-}
-
-void motion( GLFWwindow* window, double x, double y )
-{
-	if(!tb.is_tracking()) return;
-	vec2 npos = cursor_to_ndc( dvec2(x,y), window_size );
-	cam.view_matrix = tb.update( npos );
+	printf("[help]\n");
+	printf("- press ESC or 'q' to terminate the program\n");
+	printf("- press F1 or 'h' to see help\n");
+	printf("- press Home to reset camera\n");
+	printf("- press 'd' to toggle between OBJ format and 3DS format\n");
+	printf("\n");
 }
 
 bool init_background()
@@ -579,13 +535,13 @@ bool user_init()
 	print_help();
 
 	// init GL states
-	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
+	glClearColor(39 / 255.0f, 40 / 255.0f, 34 / 255.0f, 1.0f);	// set clear color
 	glEnable(GL_BLEND);
-	glEnable( GL_CULL_FACE );								// turn on backface culling
-	glEnable( GL_DEPTH_TEST );								// turn on depth tests
-	glEnable( GL_TEXTURE);
+	glEnable(GL_CULL_FACE);								// turn on backface culling
+	glEnable(GL_DEPTH_TEST);								// turn on depth tests
+	glEnable(GL_TEXTURE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glActiveTexture( GL_TEXTURE0 );
+	glActiveTexture(GL_TEXTURE0);
 
 	unit_wall_vertices = std::move(create_wall());
 	update_vertex_buffer(unit_wall_vertices);
@@ -597,14 +553,93 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_hero));
 	pMesh.emplace_back(load_model(wood_box));
 	pMesh.emplace_back(load_model(wood_box));
+	pMesh.emplace_back(load_model(mesh_living));
 
 	hero = &models[1];
 
-	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
+	if (pMesh.empty()) { printf("Unable to load mesh\n"); return false; }
 	if (!init_text()) return false;
 	if (!init_background()) return false;
 	return true;
 }
+
+#pragma endregion
+
+#pragma region User_Input
+
+void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (action == GLFW_PRESS)
+	{
+		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
+		else if (key == GLFW_KEY_HOME)					cam = camera();
+		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
+		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
+		else if (key == GLFW_KEY_N && scene != 0 && scene < 6)					scene++;
+		else if (key == GLFW_KEY_R)
+		{
+			b_2d = !b_2d;
+			if (b_2d) {
+				if (game_over_chk(0)) printf("Game Over");
+			}
+		}
+		else if (key == GLFW_KEY_A)
+		{
+			if (hero->action != PULL) hero->action = PUSH;
+		}
+		else if (key == GLFW_KEY_S)
+		{
+			if (hero->action != PUSH) hero->action = PULL;
+		}
+		else if (key == GLFW_KEY_RIGHT) {
+			if (!b_2d) hero->right_move(maps[0], models);
+			else hero->right_move_2d(maps[0], models);
+		}
+		else if (key == GLFW_KEY_LEFT) {
+			if (!b_2d) hero->left_move(maps[0], models);
+			else hero->left_move_2d(maps[0], models);
+		}
+		else if (key == GLFW_KEY_UP) {
+			if (!b_2d) hero->up_move(maps[0], models);
+		}
+		else if (key == GLFW_KEY_DOWN) {
+			if (!b_2d) hero->down_move(maps[0], models);
+		}
+	}
+
+	if (action == GLFW_RELEASE) {
+		if (key == GLFW_KEY_A)
+		{
+			if (hero->action != PULL) hero->action = 0;
+		}
+		else if (key == GLFW_KEY_S)
+		{
+			if (hero->action != PUSH) hero->action = 0;
+		}
+	}
+}
+
+void mouse(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT)
+	{
+		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
+		vec2 npos = cursor_to_ndc(pos, window_size);
+		if (action == GLFW_PRESS)			tb.begin(cam.view_matrix, npos);
+		else if (action == GLFW_RELEASE)	tb.end();
+	}
+}
+
+void motion(GLFWwindow* window, double x, double y)
+{
+	if (!tb.is_tracking()) return;
+	vec2 npos = cursor_to_ndc(dvec2(x, y), window_size);
+	cam.view_matrix = tb.update(npos);
+}
+
+#pragma endregion
+
 
 void user_finalize()
 {
