@@ -9,6 +9,7 @@ in	vec2 tc;
 
 out	vec4 fragColor;
 
+uniform int mode;
 uniform sampler2D	TEXT;
 uniform vec4		text_color;
 

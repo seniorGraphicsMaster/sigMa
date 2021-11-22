@@ -5,12 +5,12 @@
 	precision highp float; // default precision needs to be defined
 #endif
 
-out vec4 FragColor;
+out vec4 fragColor;
 
-in vec3 TexCoords;
+in vec3 tc;
 
-uniform samplerCube skybox;
+uniform samplerCube cubemap;
 
 void main() {
-	FragColor = texture(skybox, TexCoords);
+	fragColor = texture(cubemap, tc);
 }

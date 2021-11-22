@@ -27,7 +27,7 @@ static const char* frag_background_path = "shaders/skybox.frag";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
-static const char* object_door = "texture/door.jpg";
+static const char* object_door = "texture/door.png";
 
 //*************************************
 // common structures
@@ -165,7 +165,7 @@ std::string LeftTime(float t) {
 	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
 	return s;
 }
-unsigned int loadCubemap(std::vector<std::string> faces) {
+GLuint loadCubemap(std::vector<std::string> faces) {
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -303,9 +303,9 @@ void render()
 {
 	// clear screen (with background color) and clear depth buffer
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	glUseProgram(program_background);
 	glDepthMask(GL_FALSE);
 	glActiveTexture(GL_TEXTURE0);
+	glUseProgram(program_background);
 	GLint uloc1;
 	uloc1 = glGetUniformLocation(program_background, "view_matrix");			if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, cam.view_matrix);
 	uloc1 = glGetUniformLocation(program_background, "projection_matrix");	if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar));
@@ -314,6 +314,7 @@ void render()
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
 	// notify GL that we use our own program
+	
 	glUseProgram( program );
 	if (scene == 0) {
 		float dpi_scale = cg_get_dpi_scale();
@@ -360,7 +361,7 @@ void render()
 		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
 	}
-
+	
 	int i = 0;
 	glActiveTexture(GL_TEXTURE0);
 	// bind vertex array object
@@ -517,48 +518,49 @@ bool init_background()
 	program_background = cg_create_program(vert_background_path, frag_background_path);
 	if (!program_background) return false;
 
-	float vertices[] = {
-	-1.0f,  1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
+	vertex vertices[] =
+	{
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(-1.0f,1.0f,-1.0f) },
 
-	-1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(-1.0f,-1.0f,1.0f) },
 
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(1.0f,-1.0f,-1.0f) },
 
-	-1.0f, -1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		{ vec3(-1.0f,-1.0f,1.0f) },
 
-	-1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f, -1.0f,
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(-1.0f,1.0f,-1.0f) },
 
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(1.0f,-1.0f,1.0f)  }
 	};
 
 	GLuint vertex_buffer;
@@ -581,7 +583,7 @@ bool user_init()
 	glEnable(GL_BLEND);
 	glEnable( GL_CULL_FACE );								// turn on backface culling
 	glEnable( GL_DEPTH_TEST );								// turn on depth tests
-	glEnable( GL_TEXTURE_2D );
+	glEnable( GL_TEXTURE);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glActiveTexture( GL_TEXTURE0 );
 
