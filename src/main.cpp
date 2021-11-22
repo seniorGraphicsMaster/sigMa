@@ -61,12 +61,17 @@ struct material_t
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	float	shininess = 2000.0f;
 };
+
 struct herostate
 {
-	float energy = 100.0f;
-	float decrease_rate = 1.0f;
-	float stopped = 0.0f;
-	float passed = 0.0f;
+	float energy;
+	float decrease_rate;
+	float stopped;
+	float passed;
+
+	herostate() { energy = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; }
+	herostate(float e, float d) { energy = e; decrease_rate = d; stopped = 0.0f; passed = 0.0f; }
+	herostate(float e, float d, float s, float p) { energy = e; decrease_rate = d, stopped = s; passed = p; }
 	
 };
 
@@ -96,6 +101,7 @@ auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
+map_t	cur_map;
 
 std::vector<std::string> skyboxes = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
 GLuint skyboxTexture;
@@ -119,7 +125,6 @@ herostate	hero_state;
 
 //if the return value is 1, game over
 int game_over_chk(int type) {
-	map_t cur_map = maps[0];
 	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
 	
 	switch (type) {
@@ -201,7 +206,7 @@ GLuint loadCubemap(std::vector<std::string> faces) {
 
 #pragma region Scenes
 
-void load_scene_start(int scene) {
+void load_start_scene(int scene) {
 	
 	float dpi_scale = cg_get_dpi_scale();
 
@@ -242,8 +247,59 @@ void load_scene_start(int scene) {
 	return;
 }
 
-void load_scene_game(int scene) {
+void load_game_scene(int scene) {
+	switch (scene) {
+	case 6:
+		//set warehouse
+		models[0].id = 0; 
+		cur_map = maps[0];
 
+		//set hero position
+		hero->center = vec3(0.0f, -7.5f, 1.0f);
+		hero->cur_pos = vec2(2, 4);
+
+		//set wood position
+		models[2].center = vec3(-15.0f, -22.5f, 1.0f);
+		models[2].cur_pos = vec2(1, 3);
+		//models[3].center = vec3(15.0f, 22.5f, 1.0f);
+		//models[3].cur_pos = vec2(3, 6);
+
+		//set wall
+		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
+		walls[0].size = vec2(154.0f, 1.0f);
+		walls[1].center = vec3(-39.48f, 52.5f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		hero_state = herostate();
+		break;
+	case 7:
+		//set warehouse
+		models[0].id = 4;
+		cur_map = maps[1];
+
+		//set hero position
+		hero->center = vec3(-60.0f, 75.0f, 1.0f);
+		hero->cur_pos = vec2(3, 12);
+
+		//set wood position
+		models[2].center = vec3(-90.0f, -105.0f, 1.0f);
+		models[2].cur_pos = vec2(1, 0);
+		models[3].center = vec3(-75.0f, -105.0f, 1.0f);
+		models[3].cur_pos = vec2(2, 0);
+
+		//set wall
+		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
+		walls[0].size = vec2(229.0f, 1.0f);
+		walls[1].center = vec3(-114.48f, 30.0f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		hero_state = herostate(120.0f, 1.0f);
+		break;
+	default:
+		break;
+	}
 }
 #pragma endregion
 
@@ -322,7 +378,7 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 300); // 보이는 영역
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 1000); // 보이는 영역
 		cam.view_matrix = mat4::look_at(vec3(200.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
@@ -379,7 +435,7 @@ void render()
 	glUseProgram(program);
 
 	// scene < 6 (game story)
-	load_scene_start(scene);
+	load_start_scene(scene);
 
 	if (scene > 5) {
 
@@ -576,7 +632,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
-		else if (key == GLFW_KEY_N && scene != 0 && scene < 6)					scene++;
+		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
+			scene++;
+			if (scene == 6) load_game_scene(7);
+		}					
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
@@ -593,18 +652,18 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			if (!b_2d) hero->right_move(maps[0], models);
-			else hero->right_move_2d(maps[0], models);
+			if (!b_2d) hero->right_move(cur_map, models);
+			else hero->right_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			if (!b_2d) hero->left_move(maps[0], models);
-			else hero->left_move_2d(maps[0], models);
+			if (!b_2d) hero->left_move(cur_map, models);
+			else hero->left_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			if (!b_2d) hero->up_move(maps[0], models);
+			if (!b_2d) hero->up_move(cur_map, models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			if (!b_2d) hero->down_move(maps[0], models);
+			if (!b_2d) hero->down_move(cur_map, models);
 		}
 	}
 
