@@ -115,6 +115,8 @@ std::vector<vertex>	unit_wall_vertices;
 // scene objects
 std::vector<mesh2*>		pMesh;
 camera		cam;
+float		cam_xpos = 200.0f;
+
 trackball	tb;
 light_t		light;
 material_t	materials;
@@ -250,6 +252,9 @@ void load_start_scene(int scene) {
 void load_game_scene(int scene) {
 	switch (scene) {
 	case 6:
+		//set camera
+		cam_xpos = 200.0f;
+
 		//set warehouse
 		models[0].id = 0; 
 		cur_map = maps[0];
@@ -274,6 +279,9 @@ void load_game_scene(int scene) {
 		hero_state = herostate();
 		break;
 	case 7:
+		//set camera
+		cam_xpos = 275.0f;
+
 		//set warehouse
 		models[0].id = 4;
 		cur_map = maps[1];
@@ -379,7 +387,7 @@ void update()
 			0, 0, 0, 1
 		};
 		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 1000); // 보이는 영역
-		cam.view_matrix = mat4::look_at(vec3(200.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
+		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
