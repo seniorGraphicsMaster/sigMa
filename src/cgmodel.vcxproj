@@ -72,8 +72,8 @@
   <ItemGroup>
     <None Include="..\bin\shaders\model.frag" />
     <None Include="..\bin\shaders\model.vert" />
-    <None Include="text.frag" />
-    <None Include="text.vert" />
+    <None Include="..\bin\shaders\text.frag" />
+    <None Include="..\bin\shaders\text.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

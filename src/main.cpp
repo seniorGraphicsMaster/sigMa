@@ -54,6 +54,14 @@ struct material_t
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	float	shininess = 2000.0f;
 };
+struct herostate
+{
+	float energy = 100.0f;
+	float decrease_rate = 1.0f;
+	float stopped = 0.0f;
+	float passed = 0.0f;
+	
+};
 
 //*************************************
 // window objects
@@ -69,8 +77,9 @@ GLuint	WALL_warehouse = 0;
 // global variables
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
-bool	b_2d = false;
+bool	b_2d = true;
 float	t;
+bool	pause = true;
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
@@ -89,7 +98,7 @@ camera		cam;
 trackball	tb;
 light_t		light;
 material_t	materials;
-
+herostate	hero_state;
 #pragma region GAME_MANAGE
 
 //if the return value is 1, game over
@@ -113,7 +122,36 @@ int game_over_chk(int type) {
 
 	return 0 ;
 }
-
+std::string EnergyBar(float t) {
+	std::string s;
+	if (!pause) {
+		hero_state.passed = t - hero_state.stopped;
+	}
+	else {
+		hero_state.stopped = t - hero_state.passed;
+	}
+	int left = int(hero_state.energy - hero_state.passed * hero_state.decrease_rate) / 10;
+	for (int i = 0; i < 10; i++) {
+		if (i <= left) {
+			s += "O";
+		}
+		else {
+			s += "*";
+		}
+	}
+	return s;
+}
+std::string LeftTime(float t) {
+	std::string s;
+	if (!pause) {
+		hero_state.passed = t - hero_state.stopped;
+	}
+	else {
+		hero_state.stopped = t - hero_state.passed;
+	}
+	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
+	return s;
+}
 
 #pragma endregion
 
@@ -190,8 +228,8 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 10.5f, 400); // 보이는 영역
-		cam.view_matrix = mat4::look_at(vec3(50.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 300); // 보이는 영역
+		cam.view_matrix = mat4::look_at(vec3(200.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 	}
 	else {
 		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
@@ -200,6 +238,7 @@ void update()
 
 	// build the model matrix for oscillating scale
 	t = float(glfwGetTime());
+	
 	// update uniform variables in vertex/fragment shaders
 	GLint uloc;
 	uloc = glGetUniformLocation( program, "view_matrix" );			if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.view_matrix );
@@ -225,8 +264,7 @@ void render()
 	
 	// notify GL that we use our own program
 	glUseProgram( program );
-	glActiveTexture(GL_TEXTURE0);
-	int i = 0;
+	
 	
 	if (scene == 0) {
 		float dpi_scale = cg_get_dpi_scale();
@@ -274,7 +312,8 @@ void render()
 		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
 	}
 
-
+	int i = 0;
+	glActiveTexture(GL_TEXTURE0);
 	// bind vertex array object
 	for (auto& m : models) {
 		glBindVertexArray(pMesh[i]->vertex_array);
@@ -317,7 +356,15 @@ void render()
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
 	}
-	//text render
+	if (scene == 6) {
+		pause = false;
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		//render_text("Left time: ", 100, 100, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+	}
 	
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers( window );
@@ -349,8 +396,8 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
-		else if (key == GLFW_KEY_S)					scene = 1;
-		else if (key == GLFW_KEY_N)					scene++;
+		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
+		else if (key == GLFW_KEY_N && scene != 0 && scene < 6)					scene++;
 		else if (key == GLFW_KEY_R)
 		{
 			b_2d = !b_2d;
@@ -367,18 +414,18 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 			if(hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT) {
-			if(!b_2d) hero->right_move(maps[scene], models);
-			else hero->right_move_2d(maps[scene], models);
+			if(!b_2d) hero->right_move(maps[0], models);
+			else hero->right_move_2d(maps[0], models);
 		}
 		else if (key == GLFW_KEY_LEFT) {
-			if (!b_2d) hero->left_move(maps[scene], models);
-			else hero->left_move_2d(maps[scene], models);
+			if (!b_2d) hero->left_move(maps[0], models);
+			else hero->left_move_2d(maps[0], models);
 		}
 		else if (key == GLFW_KEY_UP) {
-			if (!b_2d) hero->up_move(maps[scene], models);
+			if (!b_2d) hero->up_move(maps[0], models);
 		}
 		else if (key == GLFW_KEY_DOWN) {
-			if (!b_2d) hero->down_move(maps[scene], models);
+			if (!b_2d) hero->down_move(maps[0], models);
 		}
 	}
 
