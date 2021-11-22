@@ -6,7 +6,7 @@
 struct wall_t
 {
 	vec3	center = vec3(0);		// 2D position for translation
-	float	scale;
+	vec2	size = vec2(0);
 
 	mat4	model_matrix;
 
@@ -15,7 +15,9 @@ struct wall_t
 inline std::vector<wall_t> set_wall() {
 	std::vector<wall_t> arr;
 	wall_t m;
-	m = { vec3(-39.49f,0.0f,26.0f),154.0f };//warehouse
+	m = { vec3(-39.49f,0.0f,26.0f),vec2(154.0f,1.0f) };//warehouse
+	arr.emplace_back(m);
+	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,0.8f) };//warehouse
 	arr.emplace_back(m);
 	return arr;
 }
@@ -25,8 +27,8 @@ inline void wall_t::setSize()
 	mat4 scale_matrix =
 	{
 		1, 0, 0, 0,
-		0, scale, 0, 0,
-		0, 0, 1, 0,
+		0, size.x, 0, 0,
+		0, 0, size.y, 0,
 		0, 0, 0, 1
 	};
 

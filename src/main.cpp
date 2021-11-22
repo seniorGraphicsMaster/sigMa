@@ -21,8 +21,13 @@ static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
 
+
+static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
+static const char* frag_background_path = "shaders/skybox.frag";
+
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
+static const char* object_door = "texture/door.jpg";
 
 //*************************************
 // common structures
@@ -41,7 +46,8 @@ struct camera
 };
 struct light_t
 {
-	vec4	position = vec4(0.0f, 0.0f, 30.0f, 1.0f);   // spot light
+	vec4	position = vec4(0.0f, 0.0f, 50.0f, 1.0f);   // spot light
+	vec4	position_2d = vec4(100.0f, 0.0f, 0.0f, 0.0f);
 	vec4	ambient = vec4(0.3f, 0.3f, 0.3f, 1.0f);
 	vec4	diffuse = vec4(0.8f, 0.8f, 0.8f, 1.0f);
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -73,6 +79,11 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 GLuint	program	= 0;	// ID holder for GPU program
 GLuint	wall_vertex_array = 0;
 GLuint	WALL_warehouse = 0;
+GLuint	DOOR = 1;
+
+GLuint		VAO_BACKGROUND;			// vertex array for text objects
+GLuint		program_background;	// GPU program for text render
+
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -85,6 +96,8 @@ auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
 
+std::vector<std::string> skyboxes = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
+GLuint skyboxTexture;
 model_t* hero;
 
 //*************************************
@@ -103,7 +116,7 @@ herostate	hero_state;
 
 //if the return value is 1, game over
 int game_over_chk(int type) {
-	map_t cur_map = maps[scene];
+	map_t cur_map = maps[0];
 	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
 	
 	switch (type) {
@@ -152,7 +165,35 @@ std::string LeftTime(float t) {
 	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
 	return s;
 }
+unsigned int loadCubemap(std::vector<std::string> faces) {
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
 
+	int width, height, nrChannels;
+	for (unsigned int i = 0; i < faces.size(); i++)
+	{
+		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		if (data)
+		{
+			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+				0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+			);
+			stbi_image_free(data);
+		}
+		else
+		{
+			stbi_image_free(data);
+		}
+	}
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+	return textureID;
+}
 #pragma endregion
 
 //*************************************
@@ -230,10 +271,12 @@ void update()
 		};
 		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 300); // 보이는 영역
 		cam.view_matrix = mat4::look_at(vec3(200.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
+		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
 		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
 		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //보이는 영역
+		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	}
 
 	// build the model matrix for oscillating scale
@@ -245,7 +288,6 @@ void update()
 	uloc = glGetUniformLocation( program, "projection_matrix" );	if(uloc>-1) glUniformMatrix4fv( uloc, 1, GL_TRUE, cam.projection_matrix );
 	
 	// setup light properties
-	glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	glUniform4fv(glGetUniformLocation(program, "Ia"), 1, light.ambient);
 	glUniform4fv(glGetUniformLocation(program, "Id"), 1, light.diffuse);
 	glUniform4fv(glGetUniformLocation(program, "Is"), 1, light.specular);
@@ -261,11 +303,18 @@ void render()
 {
 	// clear screen (with background color) and clear depth buffer
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	
+	glUseProgram(program_background);
+	glDepthMask(GL_FALSE);
+	glActiveTexture(GL_TEXTURE0);
+	GLint uloc1;
+	uloc1 = glGetUniformLocation(program_background, "view_matrix");			if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, cam.view_matrix);
+	uloc1 = glGetUniformLocation(program_background, "projection_matrix");	if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar));
+	glBindVertexArray(VAO_BACKGROUND);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDepthMask(GL_TRUE);
 	// notify GL that we use our own program
 	glUseProgram( program );
-	
-	
 	if (scene == 0) {
 		float dpi_scale = cg_get_dpi_scale();
 		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
@@ -346,15 +395,19 @@ void render()
 	glBindVertexArray(wall_vertex_array);
 	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
 	glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
+	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+	glBindTexture(GL_TEXTURE_2D, DOOR);
+	i = 1;
 	for (auto& w : walls) {
 		w.setSize();
 		GLint uloc;
 		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
-		glUniform1i(glGetUniformLocation(program, "TEX"), 1);
+		glUniform1i(glGetUniformLocation(program, "TEX"), i);
 		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 		glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
+		i++;
 	}
 	if (scene == 6) {
 		pause = false;
@@ -459,6 +512,65 @@ void motion( GLFWwindow* window, double x, double y )
 	cam.view_matrix = tb.update( npos );
 }
 
+bool init_background()
+{
+	program_background = cg_create_program(vert_background_path, frag_background_path);
+	if (!program_background) return false;
+
+	float vertices[] = {
+	-1.0f,  1.0f, -1.0f,
+	-1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f, -1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+
+	-1.0f, -1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f,
+	-1.0f, -1.0f,  1.0f,
+
+	-1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f, -1.0f,
+	 1.0f,  1.0f,  1.0f,
+	 1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f,  1.0f,
+	-1.0f,  1.0f, -1.0f,
+
+	-1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f, -1.0f,
+	 1.0f, -1.0f, -1.0f,
+	-1.0f, -1.0f,  1.0f,
+	 1.0f, -1.0f,  1.0f
+	};
+
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	VAO_BACKGROUND = cg_create_vertex_array(vertex_buffer); if (!VAO_BACKGROUND) { printf("%s(): VAO==nullptr\n", __func__); return false; }
+	skyboxTexture = loadCubemap(skyboxes);
+	return true;
+}
+
 bool user_init()
 {
 	// log hotkeys
@@ -476,7 +588,7 @@ bool user_init()
 	unit_wall_vertices = std::move(create_wall());
 	update_vertex_buffer(unit_wall_vertices);
 	WALL_warehouse = cg_create_texture(wall_warehouse, true); if (!WALL_warehouse) return false;
-
+	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
 
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
@@ -488,6 +600,7 @@ bool user_init()
 
 	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
 	if (!init_text()) return false;
+	if (!init_background()) return false;
 	return true;
 }
 
