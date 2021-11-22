@@ -21,6 +21,7 @@ static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
 static const char* mesh_living = "mesh/Room/living/living.obj";
+static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
 
 
 static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
@@ -96,6 +97,7 @@ int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_2d = true;
 float	t;
+float	start_t;
 bool	pause = true;
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
@@ -148,10 +150,10 @@ int game_over_chk(int type) {
 std::string EnergyBar(float t) {
 	std::string s;
 	if (!pause) {
-		hero_state.passed = t - hero_state.stopped;
+		hero_state.passed = t - start_t - hero_state.stopped;
 	}
 	else {
-		hero_state.stopped = t - hero_state.passed;
+		hero_state.stopped = t - start_t - hero_state.passed;
 	}
 	int left = int(hero_state.energy - hero_state.passed * hero_state.decrease_rate) / 10;
 	for (int i = 0; i < 10; i++) {
@@ -167,10 +169,10 @@ std::string EnergyBar(float t) {
 std::string LeftTime(float t) {
 	std::string s;
 	if (!pause) {
-		hero_state.passed = t - hero_state.stopped;
+		hero_state.passed = t - start_t - hero_state.stopped;
 	}
 	else {
-		hero_state.stopped = t - hero_state.passed;
+		hero_state.stopped = t - start_t - hero_state.passed;
 	}
 	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
 	return s;
@@ -249,9 +251,21 @@ void load_start_scene(int scene) {
 	return;
 }
 
+void set_false() {
+	for (auto& m : models) {
+		if (m.id != 0 && m.id != 1) m.active = false;
+	}
+	return;
+}
+
 void load_game_scene(int scene) {
 	switch (scene) {
 	case 6:
+		//set objects
+		set_false();
+		models[2].active = true;
+		models[3].active = true;
+
 		//set camera
 		cam_xpos = 200.0f;
 
@@ -266,8 +280,8 @@ void load_game_scene(int scene) {
 		//set wood position
 		models[2].center = vec3(-15.0f, -22.5f, 1.0f);
 		models[2].cur_pos = vec2(1, 3);
-		//models[3].center = vec3(15.0f, 22.5f, 1.0f);
-		//models[3].cur_pos = vec2(3, 6);
+		models[3].center = vec3(15.0f, 22.5f, 1.0f);
+		models[3].cur_pos = vec2(3, 6);
 
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
@@ -276,9 +290,15 @@ void load_game_scene(int scene) {
 		walls[1].size = vec2(15.0f, 0.8f);
 
 		//time set
+		start_t = float(glfwGetTime());
 		hero_state = herostate();
 		break;
 	case 7:
+		//set objects
+		set_false();
+		models[2].active = true;
+		models[3].active = true;
+
 		//set camera
 		cam_xpos = 275.0f;
 
@@ -303,7 +323,38 @@ void load_game_scene(int scene) {
 		walls[1].size = vec2(15.0f, 0.8f);
 
 		//time set
+		start_t = float(glfwGetTime());
 		hero_state = herostate(120.0f, 1.0f);
+		break;
+	case 8:
+		//set objects
+		set_false();
+		models[2].active = true;
+
+		//set camera
+		cam_xpos = 230.0f;
+
+		//set warehouse
+		models[0].id = 5;
+		cur_map = maps[2];
+
+		//set hero position
+		hero->center = vec3(22.5f, 15.0f, 1.0f);
+		hero->cur_pos = vec2(6, 3);
+
+		//set wood position
+		models[2].center = vec3(37.5f, -15.0f, 1.0f);
+		models[2].cur_pos = vec2(7, 1);
+
+		//set wall
+		walls[0].center = vec3(-77.0f, 0.0f, 26.0f);
+		walls[0].size = vec2(79.0f, 1.0f);
+		walls[1].center = vec3(-77.48f, -30.0f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(80.0f, 1.0f);
 		break;
 	default:
 		break;
@@ -451,6 +502,8 @@ void render()
 		glActiveTexture(GL_TEXTURE0);
 		// bind vertex array object
 		for (auto& m : models) {
+			if (!m.active) continue;
+			
 			glBindVertexArray(pMesh[m.id]->vertex_array);
 			m.update(t);
 			GLint uloc;
@@ -618,6 +671,7 @@ bool user_init()
 	pMesh.emplace_back(load_model(wood_box));
 	pMesh.emplace_back(load_model(wood_box));
 	pMesh.emplace_back(load_model(mesh_living));
+	pMesh.emplace_back(load_model(mesh_kitchen));
 
 	hero = &models[1];
 
@@ -642,14 +696,17 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
 			scene++;
-			if (scene == 6) load_game_scene(7);
+			if (scene == 6) load_game_scene(8);
 		}					
-		else if (key == GLFW_KEY_R)
+		else if (key == GLFW_KEY_F)
 		{
 			b_2d = !b_2d;
 			if (b_2d) {
 				if (game_over_chk(0)) printf("Game Over");
 			}
+		}
+		else if (key == GLFW_KEY_R) {
+			load_game_scene(scene);
 		}
 		else if (key == GLFW_KEY_A)
 		{

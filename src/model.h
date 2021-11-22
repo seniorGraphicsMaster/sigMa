@@ -252,6 +252,9 @@ inline void model_t::left_move_2d(map_t& cur_map, std::vector<model_t>& models) 
 
 	//rotation
 	theta = 0;
+
+	//wall check
+	if (next_pos.y < 0) return;
 	
 	//line check
 	for (int i = 0; i < cur_map.grid.x; i++) {
@@ -267,6 +270,8 @@ inline void model_t::right_move_2d(map_t& cur_map, std::vector<model_t>& models)
 
 	//rotation
 	theta = PI;
+
+	if (next_pos.y > cur_map.grid.y - 1) return;
 	
 	//line check
 	for (int i = 0; i < cur_map.grid.x; i++) {
