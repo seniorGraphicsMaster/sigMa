@@ -24,6 +24,7 @@ static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
 static const char* mesh_bedroom = "mesh/Room/bed/bedroom.obj";
 static const char* mesh_bathroom = "mesh/Room/bath/bathroom.obj";
 static const char* mesh_flower = "mesh/Enemy/Mflower/Mflower.obj";
+static const char* mesh_warehouse_key = "mesh/gimmick/key/key.obj";
 
 static const char* vert_shader_path = "shaders/model.vert";
 static const char* frag_shader_path = "shaders/model.frag";
@@ -296,6 +297,11 @@ void set_false() {
 		if (i != 0 && i != 1) m.active = false;
 		i++;
 	}
+	i = 0;
+	for (auto& w : walls) {
+		if (i != 0) w.active = false;
+		i++;
+	}
 	return;
 }
 
@@ -304,8 +310,6 @@ void load_game_scene(int scene) {
 	case 6:
 		//set objects
 		set_false();
-		models[2].active = true;
-		models[3].active = true;
 
 		//set camera
 		cam_xpos = 200.0f;
@@ -316,73 +320,32 @@ void load_game_scene(int scene) {
 		cur_map = maps[0];
 		cur_tex = 0;
 
-		//set hero position
-		obj_3d_pos(*hero, scene, vec2(2, 4));
-		
-		//set wood position
-		models[2].center = vec3(-15.0f, -22.5f, 1.0f);
-		models[2].cur_pos = vec2(1, 3);
-		models[3].center = vec3(15.0f, 22.5f, 1.0f);
-		models[3].cur_pos = vec2(3, 6);
-
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
 		walls[0].size = vec2(154.0f, 50.0f);
-		//obj_2d_pos(walls[1], scene, 1, 2, vec2(1, 2));
-		obj_floor_pos(walls[1], scene, vec2(1, 5));
-
-		//walls[1].center = vec3(0.0f, 52.5f, 1.01f);
-		//walls[1].size = vec2(15.0f, 15.0f);
-		//walls[1].theta = -PI / 2;
-		//walls[1].z_theta = - PI / 2;
-
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate();
 		
 		break;
 	case 7:
 		//set objects
 		set_false();
-		models[2].active = true;
-		models[3].active = true;
-		models[4].active = true;
 
 		//set camera
 		cam_xpos = 275.0f;
 		cam_xmax = 400.0f;
+
 		//set warehouse
 		models[0].id = 4;
 		cur_map = maps[1];
 		cur_tex = 1;
 
-		//set hero position
-		obj_3d_pos(*hero, scene, vec2(3, 12));
-
-		//set wood position
-		models[2].center = vec3(-90.0f, -105.0f, 1.0f);
-		models[2].cur_pos = vec2(1, 0);
-		models[3].center = vec3(-75.0f, -105.0f, 1.0f);
-		models[3].cur_pos = vec2(2, 0);
-		models[4].center = vec3(30.0f, 105.0f, 1.0f);
-		models[4].cur_pos = vec2(9, 14);
-		models[4].theta = PI / 2;
-		
-
 		//set wall
 		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
 		walls[0].size = vec2(229.0f, 50.0f);
-		walls[1].center = vec3(-114.48f, 30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(120.0f, 1.0f);
 		break;
 	case 8:
 		//set objects
 		set_false();
-		models[2].active = true;
 
 		//set camera
 		cam_xpos = 200.0f;
@@ -393,57 +356,31 @@ void load_game_scene(int scene) {
 		cur_map = maps[2];
 		cur_tex = 2;
 
-		//set hero position
-		obj_3d_pos(*hero, scene, vec2(1, 7));
-
-		//set wood position
-		obj_3d_pos(models[2], scene, vec2(3, 8));
-
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(79.0f, 50.0f);
-		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
-
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(80.0f, 1.0f);
 		break;
 	case 9:
 		//set objects
 		set_false();
-		models[2].active = true;
 
 		//set camera
 		cam_xpos = 237.5f;
 		cam_xmax = 330.0f;
+
 		//set warehouse
 		models[0].id = 6;
 		cur_map = maps[3];
 		cur_tex = 3;
 
-		//set hero position
-		hero->center = vec3(7.5f, 7.5f, 1.0f);
-		hero->cur_pos = vec2(5, 5);
-
-		//set wood position
-		models[2].center = vec3(-37.5f, -37.5f, 1.0f);
-		models[2].cur_pos = vec2(2, 2);
-
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(154.0f, 50.0f);
-		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(7.5f, 40.0f);
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(100.0f, 1.0f);
 		break;
 	case 10:
 		//set objects
 		set_false();
-		models[2].active = true;
 
 		//set camera
 		cam_xpos = 237.5f;
@@ -453,28 +390,70 @@ void load_game_scene(int scene) {
 		cur_map = maps[4];
 		cur_tex = 4;
 
-		//set hero position
-		hero->center = vec3(-7.5f, 0.0f, 1.0f);
-		hero->cur_pos = vec2(4, 2);
-
-		//set wood position
-		models[2].center = vec3(-52.5f, -15.0f, 1.0f);
-		models[2].cur_pos = vec2(1, 1);
-
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(79.0f, 50.0f);
-		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(80.0f, 1.0f);
 		break;
 	default:
 		break;
 	}
 }
+
+void init_state(int level) {
+
+	switch (level) {
+	case 1:
+		//active obj
+		models[2].active = true;
+		models[5].active = true;
+
+		//set hero pos
+		obj_3d_pos(*hero, scene, vec2(2, 4));
+
+		//set wood pos
+		obj_3d_pos(models[2], scene, vec2(1, 5));
+
+		//set key pos
+		obj_3d_pos(models[5], scene, vec2(0, 0));
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	}
+
+}
+
+void load_level(int level) {
+	
+	switch (level) {
+	case 1:
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate();
+
+		scene = 6;
+		load_game_scene(scene);
+		init_state(level);
+
+
+
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	}
+	
+	
+}
+
+
+
+
+
 #pragma endregion
 
 
@@ -657,6 +636,7 @@ void render()
 		i = 1;
 		for (auto& w : walls) {
 			//if (i > 1 && !b_2d) continue;
+			if (!w.active) continue;
 			w.setSize();
 			GLint uloc;
 			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
@@ -827,6 +807,7 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_bedroom));
 	pMesh.emplace_back(load_model(mesh_bathroom));
 	pMesh.emplace_back(load_model(mesh_flower));
+	pMesh.emplace_back(load_model(mesh_warehouse_key));
 
 	hero = &models[1];
 
@@ -853,7 +834,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
 			scene++;
 			//if (scene == 6) load_game_scene(scene);
-			if (scene == 6) load_game_scene(6);
+			if (scene == 6) load_level(1);
 		}					
 		else if (key == GLFW_KEY_F && !b_game)
 		{
@@ -863,7 +844,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 		}
 		else if (key == GLFW_KEY_R) {
-			load_game_scene(6);
+			load_level(1);
 			b_game = false;
 			//load_game_scene(scene);
 		}

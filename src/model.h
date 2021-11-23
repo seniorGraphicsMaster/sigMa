@@ -48,7 +48,9 @@ inline std::vector<model_t> set_pos() {
 	arr.emplace_back(m);
 	m = {3, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
 	arr.emplace_back(m);
-	m = {8, vec3(15.0f, 22.5f,1.0f),1.0f, false, false, vec2(3,6) };//flower
+	m = {8, vec3(0),1.0f, false, false, vec2(0) };//flower
+	arr.emplace_back(m);
+	m = {9, vec3(0),1.0f, false, false, vec2(0) };//warehouse_key
 	arr.emplace_back(m);
 	
 	return arr;
