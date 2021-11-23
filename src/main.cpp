@@ -320,9 +320,9 @@ void load_game_scene(int scene) {
 
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
-		walls[0].size = vec2(154.0f, 1.0f);
+		walls[0].size = vec2(154.0f, 50.0f);
 		walls[1].center = vec3(-39.48f, 52.5f, 21.0f);
-		walls[1].size = vec2(15.0f, 0.8f);
+		walls[1].size = vec2(15.0f, 40.0f);
 
 		//time set
 		start_t = float(glfwGetTime());
@@ -360,9 +360,9 @@ void load_game_scene(int scene) {
 
 		//set wall
 		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
-		walls[0].size = vec2(229.0f, 1.0f);
+		walls[0].size = vec2(229.0f, 50.0f);
 		walls[1].center = vec3(-114.48f, 30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 0.8f);
+		walls[1].size = vec2(15.0f, 40.0f);
 
 		//time set
 		start_t = float(glfwGetTime());
@@ -391,9 +391,9 @@ void load_game_scene(int scene) {
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
-		walls[0].size = vec2(79.0f, 1.0f);
+		walls[0].size = vec2(79.0f, 50.0f);
 		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 0.8f);
+		walls[1].size = vec2(15.0f, 40.0f);
 
 		//time set
 		start_t = float(glfwGetTime());
@@ -422,9 +422,9 @@ void load_game_scene(int scene) {
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
-		walls[0].size = vec2(154.0f, 1.0f);
+		walls[0].size = vec2(154.0f, 50.0f);
 		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(7.5f, 0.8f);
+		walls[1].size = vec2(7.5f, 40.0f);
 
 		//time set
 		start_t = float(glfwGetTime());
@@ -453,9 +453,9 @@ void load_game_scene(int scene) {
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
-		walls[0].size = vec2(79.0f, 1.0f);
+		walls[0].size = vec2(79.0f, 50.0f);
 		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 0.8f);
+		walls[1].size = vec2(15.0f, 40.0f);
 
 		//time set
 		start_t = float(glfwGetTime());
@@ -485,12 +485,11 @@ mat4 Ortho(float left, float right, float bottom, float top, float dnear, float 
 std::vector<vertex> create_wall() // important
 {
 	std::vector<vertex> v; // origin
-	float h = 50.0f;
-	float norm = sqrt(1+h*h);
-	v.push_back({ vec3(0, 0.5f,-1.0f * h / 2.0f), vec3(0, 1 / norm,-1.0f * h / norm), vec2(0,0) });
-	v.push_back({ vec3(0, -0.5f,-1.0f * h / 2.0f), vec3(0, -1.0f / norm,-1.0f * h / norm), vec2(1,0) });
-	v.push_back({ vec3(0, -0.5f, h / 2.0f), vec3(0, -1.0f / norm, h / norm), vec2(1,1) });
-	v.push_back({ vec3(0, 0.5f, h / 2.0f), vec3(0, 1 / norm, h / norm), vec2(0,1) });
+	float norm = sqrt(2.0f);
+	v.push_back({ vec3(0, 0.5f,-0.5f), vec3(0, 1 / norm,-1.0f / norm), vec2(0,0) });
+	v.push_back({ vec3(0, -0.5f,-0.5f), vec3(0, -1.0f / norm,-1.0f / norm), vec2(1,0) });
+	v.push_back({ vec3(0, -0.5f, 0.5f), vec3(0, -1.0f / norm, 1 / norm), vec2(1,1) });
+	v.push_back({ vec3(0, 0.5f, 0.5f), vec3(0, 1 / norm, 1 / norm), vec2(0,1) });
 
 	return v;
 }

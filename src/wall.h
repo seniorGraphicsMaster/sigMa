@@ -15,9 +15,9 @@ struct wall_t
 inline std::vector<wall_t> set_wall() {
 	std::vector<wall_t> arr;
 	wall_t m;
-	m = { vec3(-39.49f,0.0f,26.0f),vec2(154.0f,1.0f) };//warehouse
+	m = { vec3(-39.49f,0.0f,26.0f),vec2(154.0f,50.0f) };//warehouse
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,0.8f) };//warehouse
+	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f) };//warehouse
 	arr.emplace_back(m);
 	return arr;
 }
