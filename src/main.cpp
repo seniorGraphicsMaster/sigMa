@@ -22,6 +22,7 @@ static const char* mesh_living = "mesh/Room/living/living.obj";
 static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
 static const char* mesh_bedroom = "mesh/Room/bed/bedroom.obj";
 static const char* mesh_bathroom = "mesh/Room/bath/bathroom.obj";
+static const char* mesh_flower = "mesh/Enemy/Mflower/Mflower.obj";
 
 static const char* vert_shader_path = "shaders/model.vert";
 static const char* frag_shader_path = "shaders/model.frag";
@@ -331,6 +332,7 @@ void load_game_scene(int scene) {
 		set_false();
 		models[2].active = true;
 		models[3].active = true;
+		models[4].active = true;
 
 		//set camera
 		cam_xpos = 275.0f;
@@ -349,6 +351,10 @@ void load_game_scene(int scene) {
 		models[2].cur_pos = vec2(1, 0);
 		models[3].center = vec3(-75.0f, -105.0f, 1.0f);
 		models[3].cur_pos = vec2(2, 0);
+		models[4].center = vec3(30.0f, 105.0f, 1.0f);
+		models[4].cur_pos = vec2(9, 14);
+		models[4].theta = PI / 2;
+		
 
 		//set wall
 		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
@@ -635,6 +641,7 @@ void render()
 		glBindTexture(GL_TEXTURE_2D, DOOR);
 		i = 1;
 		for (auto& w : walls) {
+			if (i > 0 && !b_2d) continue;
 			w.setSize();
 			GLint uloc;
 			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
@@ -802,6 +809,7 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_kitchen));
 	pMesh.emplace_back(load_model(mesh_bedroom));
 	pMesh.emplace_back(load_model(mesh_bathroom));
+	pMesh.emplace_back(load_model(mesh_flower));
 
 	hero = &models[1];
 
@@ -828,7 +836,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
 			scene++;
 			//if (scene == 6) load_game_scene(scene);
-			if (scene == 6) load_game_scene(9);
+			if (scene == 6) load_game_scene(6);
 		}					
 		else if (key == GLFW_KEY_F)
 		{
@@ -838,7 +846,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 		}
 		else if (key == GLFW_KEY_R) {
-			load_game_scene(9);
+			load_game_scene(6);
 			//load_game_scene(scene);
 		}
 		else if (key == GLFW_KEY_A)
