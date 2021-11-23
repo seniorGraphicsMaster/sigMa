@@ -22,6 +22,8 @@ static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
 static const char* mesh_living = "mesh/Room/living/living.obj";
 static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
+static const char* mesh_bedroom = "mesh/Room/bed/bedroom.obj";
+static const char* mesh_bathroom = "mesh/Room/bath/bathroom.obj";
 
 
 static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
@@ -29,6 +31,10 @@ static const char* frag_background_path = "shaders/skybox.frag";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
+static const char* wall_living = "texture/wall_living.jpg";
+static const char* wall_kitchen = "texture/wall_kitchen.jpg";
+static const char* wall_bedroom = "texture/wall_bedroom.jpg";
+static const char* wall_bathroom = "texture/wall_bathroom.jpg";
 static const char* object_door = "texture/door.png";
 
 //*************************************
@@ -86,6 +92,10 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 GLuint	program	= 0;	// ID holder for GPU program
 GLuint	wall_vertex_array = 0;
 GLuint	WALL_warehouse = 0;
+GLuint	WALL_living = 0;
+GLuint	WALL_kitchen = 0;
+GLuint	WALL_bedroom = 0;
+GLuint	WALL_bathroom = 0;
 GLuint	DOOR = 1;
 
 GLuint		VAO_BACKGROUND;			// vertex array for text objects
@@ -103,7 +113,10 @@ auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
+int		cur_tex = 0;
+GLuint	wall_tex[5];
 map_t	cur_map;
+
 
 std::vector<std::string> skyboxes = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
 GLuint skyboxTexture;
@@ -252,8 +265,10 @@ void load_start_scene(int scene) {
 }
 
 void set_false() {
+	int i = 0;
 	for (auto& m : models) {
-		if (m.id != 0 && m.id != 1) m.active = false;
+		if (i != 0 && i != 1) m.active = false;
+		i++;
 	}
 	return;
 }
@@ -272,6 +287,7 @@ void load_game_scene(int scene) {
 		//set warehouse
 		models[0].id = 0; 
 		cur_map = maps[0];
+		cur_tex = 0;
 
 		//set hero position
 		hero->center = vec3(0.0f, -7.5f, 1.0f);
@@ -305,6 +321,7 @@ void load_game_scene(int scene) {
 		//set warehouse
 		models[0].id = 4;
 		cur_map = maps[1];
+		cur_tex = 1;
 
 		//set hero position
 		hero->center = vec3(-60.0f, 75.0f, 1.0f);
@@ -332,11 +349,12 @@ void load_game_scene(int scene) {
 		models[2].active = true;
 
 		//set camera
-		cam_xpos = 230.0f;
+		cam_xpos = 237.5f;
 
 		//set warehouse
 		models[0].id = 5;
 		cur_map = maps[2];
+		cur_tex = 2;
 
 		//set hero position
 		hero->center = vec3(22.5f, 15.0f, 1.0f);
@@ -347,9 +365,71 @@ void load_game_scene(int scene) {
 		models[2].cur_pos = vec2(7, 1);
 
 		//set wall
-		walls[0].center = vec3(-77.0f, 0.0f, 26.0f);
+		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(79.0f, 1.0f);
-		walls[1].center = vec3(-77.48f, -30.0f, 21.0f);
+		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(80.0f, 1.0f);
+		break;
+	case 9:
+		//set objects
+		set_false();
+		models[2].active = true;
+
+		//set camera
+		cam_xpos = 237.5f;
+
+		//set warehouse
+		models[0].id = 6;
+		cur_map = maps[3];
+		cur_tex = 3;
+
+		//set hero position
+		hero->center = vec3(7.5f, 7.5f, 1.0f);
+		hero->cur_pos = vec2(5, 5);
+
+		//set wood position
+		models[2].center = vec3(-37.5f, -37.5f, 1.0f);
+		models[2].cur_pos = vec2(2, 2);
+
+		//set wall
+		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
+		walls[0].size = vec2(154.0f, 1.0f);
+		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
+		walls[1].size = vec2(7.5f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(100.0f, 1.0f);
+		break;
+	case 10:
+		//set objects
+		set_false();
+		models[2].active = true;
+
+		//set camera
+		cam_xpos = 237.5f;
+
+		//set warehouse
+		models[0].id = 7;
+		cur_map = maps[4];
+		cur_tex = 4;
+
+		//set hero position
+		hero->center = vec3(-7.5f, 0.0f, 1.0f);
+		hero->cur_pos = vec2(4, 2);
+
+		//set wood position
+		models[2].center = vec3(-52.5f, -15.0f, 1.0f);
+		models[2].cur_pos = vec2(1, 1);
+
+		//set wall
+		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
+		walls[0].size = vec2(79.0f, 1.0f);
+		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
 		walls[1].size = vec2(15.0f, 0.8f);
 
 		//time set
@@ -533,7 +613,7 @@ void render()
 		}
 		glBindVertexArray(wall_vertex_array);
 		glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
-		glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
+		glBindTexture(GL_TEXTURE_2D, wall_tex[cur_tex]);
 		glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
 		glBindTexture(GL_TEXTURE_2D, DOOR);
 		i = 1;
@@ -663,6 +743,12 @@ bool user_init()
 	unit_wall_vertices = std::move(create_wall());
 	update_vertex_buffer(unit_wall_vertices);
 	WALL_warehouse = cg_create_texture(wall_warehouse, true); if (!WALL_warehouse) return false;
+	WALL_living = cg_create_texture(wall_living, true); if (!WALL_living) return false;
+	WALL_kitchen = cg_create_texture(wall_kitchen, true); if (!WALL_kitchen) return false;
+	WALL_bedroom = cg_create_texture(wall_bedroom, true); if (!WALL_bedroom) return false;
+	WALL_bathroom = cg_create_texture(wall_bathroom, true); if (!WALL_bathroom) return false;
+	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
+	
 	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
 
 	// load the mesh
@@ -672,6 +758,8 @@ bool user_init()
 	pMesh.emplace_back(load_model(wood_box));
 	pMesh.emplace_back(load_model(mesh_living));
 	pMesh.emplace_back(load_model(mesh_kitchen));
+	pMesh.emplace_back(load_model(mesh_bedroom));
+	pMesh.emplace_back(load_model(mesh_bathroom));
 
 	hero = &models[1];
 
@@ -696,7 +784,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
 			scene++;
-			if (scene == 6) load_game_scene(8);
+			//if (scene == 6) load_game_scene(scene);
+			if (scene == 6) load_game_scene(9);
 		}					
 		else if (key == GLFW_KEY_F)
 		{
@@ -706,7 +795,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 		}
 		else if (key == GLFW_KEY_R) {
-			load_game_scene(scene);
+			load_game_scene(9);
+			//load_game_scene(scene);
 		}
 		else if (key == GLFW_KEY_A)
 		{
