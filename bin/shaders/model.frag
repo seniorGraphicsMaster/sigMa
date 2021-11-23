@@ -10,7 +10,6 @@ in vec4 epos;
 in vec4 wpos;
 in vec3 norm;
 in vec2 tc;
-in vec4 FragLightSpace;
 // the only output variable
 out vec4 fragColor;
 
@@ -21,25 +20,16 @@ uniform vec4	Ka, Kd, Ks;
 
 // texture sampler
 uniform sampler2D TEX;
-uniform sampler2D shadowMap;
 uniform bool use_texture;
 uniform vec4 diffuse;
 uniform int mode;
-float ShadowCalculation(vec4 fragPosLightSpace) {
-	vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-	projCoords = projCoords * 0.5 + 0.5;
-	float closestDepth = texture(shadowMap, projCoords.xy).r;
-	float currentDepth = projCoords.z;
-	float shadow = currentDepth > closestDepth ? 1.0 : 0.0;
-	return shadow;
-}
+
 vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 {
-	float shadow = ShadowCalculation(FragLightSpace);
 	vec4 Ira = Ka*Ia;									// ambient reflection
 	vec4 Ird = max(Kd*dot(l,n)*Id,0.0f);					// diffuse reflection
 	vec4 Irs = max(Ks*pow(dot(h,n),shininess)*Is,0.0f);	// specular reflection
-	return Ira + (1.0f - shadow)*(Ird + Irs);
+	return Ira + Ird + Irs;
 }
 
 void main()

@@ -78,11 +78,5 @@
     <None Include="..\bin\shaders\image.vert">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="..\bin\shaders\shadow.frag">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="..\bin\shaders\shadow.vert">
-      <Filter>Shader Files</Filter>
-    </None>
   </ItemGroup>
 </Project>

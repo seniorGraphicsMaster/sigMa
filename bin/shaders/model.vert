@@ -8,7 +8,6 @@ out vec4 epos;	// eye-space position
 out vec4 wpos;
 out vec3 norm;	// per-vertex normal before interpolation
 out vec2 tc;	// texture coordinate
-out vec4 FragLightSpace;
 // matrices
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
@@ -24,5 +23,4 @@ void main()
 	// pass texture coordinate to fragment shader
 	norm = normalize(mat3(view_matrix*model_matrix)*normal);
 	tc = texcoord;
-	FragLightSpace = lightMatrix * vec4(wpos.xyz,1.0);
 }
