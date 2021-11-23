@@ -11,7 +11,7 @@
 // forward declarations for freetype text
 bool init_text();
 void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
-
+mat4 Ortho(float left, float right, float bottom, float top, float dnear, float dfar);
 //*************************************
 // global constants
 static const char*	window_name = "sigMa";
@@ -30,6 +30,8 @@ static const char* vert_background_path = "shaders/skybox.vert";		// text vertex
 static const char* frag_background_path = "shaders/skybox.frag";
 static const char* vert_image = "shaders/image.vert";		// text vertex shaders
 static const char* frag_image = "shaders/image.frag";
+static const char* vert_shadow = "shaders/shadow.vert";		// text vertex shaders
+static const char* frag_shadow = "shaders/shadow.frag";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
@@ -73,6 +75,13 @@ struct material_t
 	float	shininess = 2000.0f;
 };
 
+
+struct shadow_t
+{
+	mat4	lightprojecton = Ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f);
+	mat4	lightView = mat4::look_at(vec3(0.5f, 0.0f, 5.0f), vec3(0), vec3(0,0.0f,5.0f));
+};
+
 struct herostate
 {
 	float energy;
@@ -110,6 +119,10 @@ GLuint		VAO_BACKGROUND;			// vertex array for text objects
 GLuint		program = 0;		// ID holder for GPU program
 GLuint		program_background = 0;	// GPU program for text render
 GLuint		program_img = 0;
+GLuint		program_shadow = 0;
+
+GLuint		shadowfbo = 0;
+GLuint		depthMap = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -130,7 +143,7 @@ int		temporary_scene = 0;
 int		cur_tex = 0;
 GLuint	wall_tex[5];
 map_t	cur_map;
-
+const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
 GLuint skyboxTexture;
@@ -149,6 +162,7 @@ float		cam_xmax = 315.0f;
 trackball	tb;
 light_t		light;
 material_t	materials;
+shadow_t	shadows;
 herostate	hero_state;
 
 
@@ -674,7 +688,33 @@ void render()
 	}
 	glUseProgram(program);
 	if (scene > 5) {
+		glUseProgram(program_shadow);
+		int SCR_WIDTH = window_size.x, SCR_HEIGHT = window_size.y;
+		glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowfbo);
+		glClear(GL_DEPTH_BUFFER_BIT);
+		mat4 lightMatrix = shadows.lightprojecton * shadows.lightView;
+		// bind vertex array object
+		for (auto& m : models) {
+			if (!m.active) continue;
+			glBindVertexArray(pMesh[m.id]->vertex_array);
+			m.update(t);
+			GLint uloc;
+			uloc = glGetUniformLocation(program_shadow, "model");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_FALSE, m.model_matrix);
+			uloc = glGetUniformLocation(program_shadow, "lightMatrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_FALSE, lightMatrix);
+			for (size_t k = 0, kn = pMesh[m.id]->geometry_list.size(); k < kn; k++) {
+				geometry& g = pMesh[m.id]->geometry_list[k];
+				// render vertices: trigger shader programs to process vertex data
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[m.id]->index_buffer);
+				glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+			}
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindTexture(GL_TEXTURE_2D, depthMap);
 
+		glUseProgram(program);
 		int i = 0;
 		glActiveTexture(GL_TEXTURE0);
 		// bind vertex array object
@@ -685,6 +725,7 @@ void render()
 			m.update(t);
 			GLint uloc;
 			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, m.model_matrix);
+			uloc = glGetUniformLocation(program, "lightMatrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_FALSE, lightMatrix);
 			for (size_t k = 0, kn = pMesh[m.id]->geometry_list.size(); k < kn; k++) {
 				geometry& g = pMesh[m.id]->geometry_list[k];
 
@@ -692,6 +733,7 @@ void render()
 				if (g.mat->textures.diffuse) {
 					glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
 					glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+					glUniform1i(glGetUniformLocation(program, "shadowMap"), depthMap);
 					glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 					glUniform1i(glGetUniformLocation(program, "mode"), 0);
 
@@ -726,6 +768,7 @@ void render()
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
 			i++;
 		}
+		
 		if (scene == 6) {
 			pause = false;
 			float dpi_scale = cg_get_dpi_scale();
@@ -848,6 +891,27 @@ bool init_image()
 	if (!program_img) return false;
 	return true;
 }
+bool init_shadow()
+{
+	program_shadow = cg_create_program(vert_shadow, frag_shadow);
+	glGenFramebuffers(1, &shadowfbo);
+	
+	glGenTextures(1, &depthMap);
+	glBindTexture(GL_TEXTURE_2D, depthMap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+		SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, shadowfbo);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	return true;
+}
 bool user_init()
 {
 	// log hotkeys
@@ -892,6 +956,7 @@ bool user_init()
 	if (!init_text()) return false;
 	if (!init_background()) return false;
 	if (!init_image()) return false;
+	if (!init_shadow()) return false;
 	return true;
 }
 
