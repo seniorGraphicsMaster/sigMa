@@ -118,7 +118,7 @@ GLuint	wall_tex[5];
 map_t	cur_map;
 
 
-std::vector<std::string> skyboxes = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
+std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
 GLuint skyboxTexture;
 model_t* hero;
 
@@ -131,7 +131,7 @@ std::vector<vertex>	unit_wall_vertices;
 std::vector<mesh2*>		pMesh;
 camera		cam;
 float		cam_xpos = 200.0f;
-
+float		cam_xmax = 315.0f;
 trackball	tb;
 light_t		light;
 material_t	materials;
@@ -283,7 +283,7 @@ void load_game_scene(int scene) {
 
 		//set camera
 		cam_xpos = 200.0f;
-
+		cam_xmax = 315.0f;
 		//set warehouse
 		models[0].id = 0; 
 		cur_map = maps[0];
@@ -308,6 +308,7 @@ void load_game_scene(int scene) {
 		//time set
 		start_t = float(glfwGetTime());
 		hero_state = herostate();
+		
 		break;
 	case 7:
 		//set objects
@@ -317,7 +318,7 @@ void load_game_scene(int scene) {
 
 		//set camera
 		cam_xpos = 275.0f;
-
+		cam_xmax = 400.0f;
 		//set warehouse
 		models[0].id = 4;
 		cur_map = maps[1];
@@ -350,7 +351,7 @@ void load_game_scene(int scene) {
 
 		//set camera
 		cam_xpos = 237.5f;
-
+		cam_xmax = 330.0f;
 		//set warehouse
 		models[0].id = 5;
 		cur_map = maps[2];
@@ -381,7 +382,7 @@ void load_game_scene(int scene) {
 
 		//set camera
 		cam_xpos = 237.5f;
-
+		cam_xmax = 330.0f;
 		//set warehouse
 		models[0].id = 6;
 		cur_map = maps[3];
@@ -412,7 +413,7 @@ void load_game_scene(int scene) {
 
 		//set camera
 		cam_xpos = 237.5f;
-
+		cam_xmax = 330.0f;
 		//set warehouse
 		models[0].id = 7;
 		cur_map = maps[4];
@@ -517,7 +518,7 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 1000); // 보이는 영역
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // 보이는 영역
 		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
@@ -635,7 +636,7 @@ void render()
 			render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 			render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 			render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-			//render_text("Left time: ", 100, 100, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			
 		}
 	}
 
@@ -672,48 +673,48 @@ bool init_background()
 	if (!program_background) return false;
 
 	vertex vertices[] =
-	{
+	{	//-z
 		{ vec3(-1.0f,1.0f,-1.0f) },
 		{ vec3(-1.0f,-1.0f,-1.0f)},
 		{ vec3(1.0f,-1.0f,-1.0f) },
 		{ vec3(1.0f,-1.0f,-1.0f) },
 		{ vec3(1.0f,1.0f,-1.0f)  },
 		{ vec3(-1.0f,1.0f,-1.0f) },
-
+		//+y
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		//-y
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		//+z
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		//-x
 		{ vec3(-1.0f,-1.0f,1.0f) },
 		{ vec3(-1.0f,-1.0f,-1.0f)},
 		{ vec3(-1.0f,1.0f,-1.0f) },
 		{ vec3(-1.0f,1.0f,-1.0f) },
 		{ vec3(-1.0f,1.0f,1.0f)  },
 		{ vec3(-1.0f,-1.0f,1.0f) },
-
+		//+x
 		{ vec3(1.0f,-1.0f,-1.0f) },
 		{ vec3(1.0f,-1.0f,1.0f)  },
 		{ vec3(1.0f,1.0f,1.0f)   },
 		{ vec3(1.0f,1.0f,1.0f)   },
 		{ vec3(1.0f,1.0f,-1.0f)  },
 		{ vec3(1.0f,-1.0f,-1.0f) },
-
-		{ vec3(-1.0f,-1.0f,1.0f) },
-		{ vec3(-1.0f,1.0f,1.0f)  },
-		{ vec3(1.0f,1.0f,1.0f)   },
-		{ vec3(1.0f,1.0f,1.0f)   },
-		{ vec3(1.0f,-1.0f,1.0f)  },
-		{ vec3(-1.0f,-1.0f,1.0f) },
-
-		{ vec3(-1.0f,1.0f,-1.0f) },
-		{ vec3(1.0f,1.0f,-1.0f)  },
-		{ vec3(1.0f,1.0f,1.0f)   },
-		{ vec3(1.0f,1.0f,1.0f)   },
-		{ vec3(-1.0f,1.0f,1.0f)  },
-		{ vec3(-1.0f,1.0f,-1.0f) },
-
-		{ vec3(-1.0f,-1.0f,-1.0f)},
-		{ vec3(-1.0f,-1.0f,1.0f) },
-		{ vec3(1.0f,-1.0f,-1.0f) },
-		{ vec3(1.0f,-1.0f,-1.0f) },
-		{ vec3(-1.0f,-1.0f,1.0f) },
-		{ vec3(1.0f,-1.0f,1.0f)  }
 	};
 
 	GLuint vertex_buffer;
