@@ -102,6 +102,7 @@ struct state
 	map_t save_map;
 	int key_set[6];
 	std::vector<model_t> save_model;
+	std::vector<wall_t> save_wall;
 
 };
 
@@ -175,15 +176,13 @@ int		scene = 0;
 int		difficulty = 0;
 int		temporary_scene = 0;
 int		cur_tex = 0;
-int		cur_beacon_tex = 0;
 GLuint	wall_tex[5];
-GLuint  beacon_tex[5];
 
 map_t	cur_map;
 int		keys[6];
 state	save_states[10];
-int		save_scene = 0;
-vec2	beacon_pos;
+state	key_state;
+int		key_scene = 0;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
@@ -229,10 +228,13 @@ int game_over_chk(int type) {
 	return 0 ;
 }
 
-int door_active_chk() {
-	if (cur_map.map[(int)beacon_pos.x][(int)beacon_pos.y] != 0) return 1;
-	else return 0;
-
+void door_active_chk() {
+	for (int i = 6; i < 11; i++) {
+		if (walls[i].active) {
+			if (cur_map.map[(int)walls[i].pos.x][(int)walls[i].pos.y] != 0) walls[walls[i].id].active = true;
+			else walls[walls[i].id].active = false;
+		}
+	}
 }
 
 std::string EnergyBar(float t) {
@@ -427,10 +429,10 @@ void load_game_scene(int scene) {
 	switch (scene) {
 	case 6:
 		//set objects
-		b_2d = true;
+		b_2d = false;
 		set_false();
 		walls[6].active = true;
-		walls[7].active = true;
+		walls[11].active = true;
 
 		//set camera
 		cam_xpos = 200.0f;
@@ -442,13 +444,12 @@ void load_game_scene(int scene) {
 		cur_tex = 0;
 		
 		//set beacon
-		cur_beacon_tex = 0;
-		beacon_pos = vec2(3, 9);
-		obj_floor_pos(walls[6], scene, beacon_pos);
+		walls[6].pos = vec2(3, 9);
+		obj_floor_pos(walls[6], scene, walls[6].pos);
 		
 
 		//set charge
-		obj_floor_pos(walls[7], scene, vec2(4, 9));
+		obj_floor_pos(walls[11], scene, vec2(4, 9));
 
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
@@ -467,7 +468,6 @@ void load_game_scene(int scene) {
 		models[0].id = 4;
 		cur_map = maps[1];
 		cur_tex = 1;
-		cur_beacon_tex = 1;
 
 		//set wall
 		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
@@ -486,7 +486,6 @@ void load_game_scene(int scene) {
 		models[0].id = 5;
 		cur_map = maps[2];
 		cur_tex = 2;
-		cur_beacon_tex = 2;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -504,7 +503,6 @@ void load_game_scene(int scene) {
 		models[0].id = 6;
 		cur_map = maps[3];
 		cur_tex = 3;
-		cur_beacon_tex = 3;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -522,7 +520,6 @@ void load_game_scene(int scene) {
 		models[0].id = 7;
 		cur_map = maps[4];
 		cur_tex = 4;
-		cur_beacon_tex = 4;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -534,7 +531,7 @@ void load_game_scene(int scene) {
 	}
 }
 
-void save() {
+void capture() {
 	save_states[scene].save_map = cur_map;
 	
 	for (int i = 0; i < 6; i++) {
@@ -542,6 +539,47 @@ void save() {
 	}
 
 	save_states[scene].save_model = models;
+	save_states[scene].save_wall = walls;
+}
+
+void load_state(int load_scene) {
+	//load key setting
+	for (int i = 0; i < 6; i++) keys[i] = save_states[load_scene].key_set[i];
+
+	//map loading
+	cur_map = save_states[load_scene].save_map;
+
+	//load model setting
+	models = save_states[load_scene].save_model;
+	walls = save_states[load_scene].save_wall;
+}
+
+void key_capture() {
+	key_scene = scene;
+
+	key_state.save_map = cur_map;
+
+	for (int i = 0; i < 6; i++) {
+		key_state.key_set[i] = keys[i];
+	}
+
+	key_state.save_model = models;
+	key_state.save_wall = walls;
+}
+
+void reset() {
+	//change key_scene
+	load_game_scene(key_scene);
+	
+	//load key setting
+	for (int i = 0; i < 6; i++) keys[i] = key_state.key_set[i];
+
+	//map loading
+	cur_map = key_state.save_map;
+
+	//load model setting
+	models = key_state.save_model;
+	walls = key_state.save_wall;
 }
 
 void init_state(int level) {
@@ -585,7 +623,8 @@ void load_level(int level) {
 		load_game_scene(scene);
 		init_state(level);
 
-
+		//save cur_state == init_state
+		key_capture();
 
 		break;
 	case 2:
@@ -596,11 +635,6 @@ void load_level(int level) {
 	
 	
 }
-
-
-
-
-
 #pragma endregion
 
 
@@ -793,8 +827,16 @@ void render()
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, DOOR_bathroom);
 		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, beacon_tex[cur_beacon_tex]);
+		glBindTexture(GL_TEXTURE_2D, BEACON_warehouse);
 		glActiveTexture(GL_TEXTURE8);
+		glBindTexture(GL_TEXTURE_2D, BEACON_living);
+		glActiveTexture(GL_TEXTURE9);
+		glBindTexture(GL_TEXTURE_2D, BEACON_kitchen);
+		glActiveTexture(GL_TEXTURE10);
+		glBindTexture(GL_TEXTURE_2D, BEACON_bedroom);
+		glActiveTexture(GL_TEXTURE11);
+		glBindTexture(GL_TEXTURE_2D, BEACON_bathroom);
+		glActiveTexture(GL_TEXTURE12);
 		glBindTexture(GL_TEXTURE_2D, CHARGE);
 		i = 1;
 		for (auto& w : walls) {
@@ -982,7 +1024,6 @@ bool user_init()
 	BEACON_kitchen = cg_create_texture(beacon_kitchen, true); if (!BEACON_kitchen) return false;
 	BEACON_bedroom = cg_create_texture(beacon_bedroom, true); if (!BEACON_bedroom) return false;
 	BEACON_bathroom = cg_create_texture(beacon_bathroom, true); if (!BEACON_bathroom) return false;
-	beacon_tex[0] = BEACON_warehouse; beacon_tex[1] = BEACON_living; beacon_tex[2] = BEACON_kitchen; beacon_tex[3] = BEACON_bedroom; beacon_tex[4] = BEACON_bathroom;
 
 	CHARGE = cg_create_texture(img_charge, true); if (!CHARGE) return false;
 
@@ -1054,7 +1095,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 		}
 		else if (key == GLFW_KEY_R) {
-			load_level(1);
+			reset();
 			b_game = false;
 			engine->stopAllSounds();
 			engine->play2D(background_src, true);
@@ -1070,44 +1111,36 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_RIGHT && !b_game) {
 			if (!b_2d) {
-				if (hero->right_move(cur_map, models, keys)) {
-					save_scene = scene;
-					save();
+				if (hero->right_move(cur_map, models, keys) == 1) {
+					key_capture();
 				}
-				if (door_active_chk()) walls[1].active = true;
-				else walls[1].active = false;
+				door_active_chk();
 			}
 			else hero->right_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_LEFT && !b_game) {
 			if (!b_2d) {
-				if (hero->left_move(cur_map, models, keys)) {
-					save_scene = scene;
-					save();
+				if (hero->left_move(cur_map, models, keys) == 1) {
+					key_capture();
 				} 
-				if (door_active_chk()) walls[1].active = true;
-				else walls[1].active = false;
+				door_active_chk();
 			} 
 			else hero->left_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_UP && !b_game) {
 			if (!b_2d) {
-				if (hero->up_move(cur_map, models, keys)) {
-					save_scene = scene;
-					save();
+				if (hero->up_move(cur_map, models, keys) == 1) {
+					key_capture();
 				}
-				if (door_active_chk()) walls[1].active = true;
-				else walls[1].active = false;
+				door_active_chk();
 			} 
 		}
 		else if (key == GLFW_KEY_DOWN && !b_game) {
 			if (!b_2d) {
-				if (hero->down_move(cur_map, models, keys)) {
-					save_scene = scene;
-					save();
+				if (hero->down_move(cur_map, models, keys) == 1) {
+					key_capture();
 				}
-				if (door_active_chk()) walls[1].active = true;
-				else walls[1].active = false;
+				door_active_chk();
 			} 
 		}
 		
