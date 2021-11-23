@@ -96,6 +96,14 @@ struct material_t
 	float	shininess = 2000.0f;
 };
 
+struct state
+{
+	int	  scene;
+	map_t save_map;
+	int key_set[6];
+	std::vector<model_t> save_model;
+
+};
 
 
 struct herostate
@@ -173,6 +181,9 @@ GLuint  beacon_tex[5];
 
 map_t	cur_map;
 int		keys[6];
+state	save_states[10];
+int		save_scene = 0;
+vec2	beacon_pos;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
@@ -216,6 +227,12 @@ int game_over_chk(int type) {
 	}
 
 	return 0 ;
+}
+
+int door_active_chk() {
+	if (cur_map.map[(int)beacon_pos.x][(int)beacon_pos.y] != 0) return 1;
+	else return 0;
+
 }
 
 std::string EnergyBar(float t) {
@@ -424,11 +441,13 @@ void load_game_scene(int scene) {
 		cur_map = maps[0];
 		cur_tex = 0;
 		
-		//set charge
-		cur_beacon_tex = 0;
-		obj_floor_pos(walls[6], scene, vec2(3, 9));
-
 		//set beacon
+		cur_beacon_tex = 0;
+		beacon_pos = vec2(3, 9);
+		obj_floor_pos(walls[6], scene, beacon_pos);
+		
+
+		//set charge
 		obj_floor_pos(walls[7], scene, vec2(4, 9));
 
 		//set wall
@@ -515,10 +534,24 @@ void load_game_scene(int scene) {
 	}
 }
 
+void save() {
+	save_states[scene].save_map = cur_map;
+	
+	for (int i = 0; i < 6; i++) {
+		save_states[scene].key_set[i] = keys[i];
+	}
+
+	save_states[scene].save_model = models;
+}
+
 void init_state(int level) {
 
 	switch (level) {
 	case 1:
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate();
+
 		//key setting
 		for (int i = 0; i < 6; i++) keys[i] = 0;
 
@@ -547,11 +580,7 @@ void load_level(int level) {
 	
 	switch (level) {
 	case 1:
-
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate();
-
+		
 		scene = 6;
 		load_game_scene(scene);
 		init_state(level);
@@ -1040,21 +1069,46 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT && !b_game) {
-			if (!b_2d) hero->right_move(cur_map, models, keys);
+			if (!b_2d) {
+				if (hero->right_move(cur_map, models, keys)) {
+					save_scene = scene;
+					save();
+				}
+				if (door_active_chk()) walls[1].active = true;
+				else walls[1].active = false;
+			}
 			else hero->right_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_LEFT && !b_game) {
 			if (!b_2d) {
-				hero->left_move(cur_map, models, keys);
-				printf("%d\n", keys[1]);
+				if (hero->left_move(cur_map, models, keys)) {
+					save_scene = scene;
+					save();
+				} 
+				if (door_active_chk()) walls[1].active = true;
+				else walls[1].active = false;
 			} 
 			else hero->left_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_UP && !b_game) {
-			if (!b_2d) hero->up_move(cur_map, models, keys);
+			if (!b_2d) {
+				if (hero->up_move(cur_map, models, keys)) {
+					save_scene = scene;
+					save();
+				}
+				if (door_active_chk()) walls[1].active = true;
+				else walls[1].active = false;
+			} 
 		}
 		else if (key == GLFW_KEY_DOWN && !b_game) {
-			if (!b_2d) hero->down_move(cur_map, models, keys);
+			if (!b_2d) {
+				if (hero->down_move(cur_map, models, keys)) {
+					save_scene = scene;
+					save();
+				}
+				if (door_active_chk()) walls[1].active = true;
+				else walls[1].active = false;
+			} 
 		}
 		
 	}
