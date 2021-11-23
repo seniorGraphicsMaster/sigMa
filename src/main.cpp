@@ -6,6 +6,7 @@
 #include "model.h"
 #include "map.h"
 #include "wall.h"
+#include "particle.h"
 #include "irrKlang\irrKlang.h"
 #pragma comment(lib,"irrKlang.lib")
 
@@ -35,6 +36,7 @@ static const char* frag_image = "shaders/image.frag";
 //*************************************
 static const char* background_sound = "sounds/roki.wav";
 static const char* gameover_sound = "sounds/gameover.mp3";
+static const char* gameend_sound = "sounds/gameend.mp3";
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
 static const char* wall_living = "texture/wall_living.jpg";
@@ -47,6 +49,7 @@ static const char* img_start = "images/hero.png";
 irrklang::ISoundEngine* engine = nullptr;
 irrklang::ISoundSource* background_src = nullptr;
 irrklang::ISoundSource* gameover_src = nullptr;
+irrklang::ISoundSource* gameend_src = nullptr;
 //*************************************
 // common structures
 struct camera
@@ -800,8 +803,10 @@ bool init_sound() {
 	if (!engine) return false;
 	background_src = engine->addSoundSourceFromFile(absolute_path(background_sound));
 	gameover_src = engine->addSoundSourceFromFile(absolute_path(gameover_sound));
+	gameend_src = engine->addSoundSourceFromFile(absolute_path(gameend_sound));
 	background_src->setDefaultVolume(0.3f);
 	gameover_src->setDefaultVolume(0.3f);
+	gameend_src->setDefaultVolume(0.7f);
 	engine->play2D(background_src, true);
 	return true;
 }

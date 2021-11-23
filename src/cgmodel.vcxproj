@@ -65,6 +65,7 @@
     <ClInclude Include="cgut2.h" />
     <ClInclude Include="map.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="particle.h" />
     <ClInclude Include="stb_truetype.h" />
     <ClInclude Include="trackball.h" />
     <ClInclude Include="wall.h" />
@@ -74,6 +75,8 @@
     <None Include="..\bin\shaders\image.vert" />
     <None Include="..\bin\shaders\model.frag" />
     <None Include="..\bin\shaders\model.vert" />
+    <None Include="..\bin\shaders\particle.frag" />
+    <None Include="..\bin\shaders\particle.vert" />
     <None Include="..\bin\shaders\skybox.frag" />
     <None Include="..\bin\shaders\skybox.vert" />
     <None Include="..\bin\shaders\text.frag" />
