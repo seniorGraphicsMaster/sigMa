@@ -980,6 +980,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_1) {
 			difficulty = 1;
 			scene++;
+			load_level(1);
 		}
 		else if (key == GLFW_KEY_2) {
 			difficulty = 2;
@@ -992,11 +993,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
-		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
-			scene++;
-			//if (scene == 6) load_game_scene(scene);
-			if (scene == 6) load_level(1);
-		}					
+		else if (key == GLFW_KEY_N && scene != 0 && scene < 5) scene++;
+			
 		else if (key == GLFW_KEY_F && !b_game)
 		{
 			b_2d = !b_2d;
