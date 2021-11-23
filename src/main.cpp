@@ -45,7 +45,16 @@ static const char* wall_living = "texture/wall_living.jpg";
 static const char* wall_kitchen = "texture/wall_kitchen.jpg";
 static const char* wall_bedroom = "texture/wall_bedroom.jpg";
 static const char* wall_bathroom = "texture/wall_bathroom.jpg";
-static const char* object_door = "texture/door.png";
+static const char* object_door_warehouse = "texture/door.png";
+static const char* object_door_living = "texture/door_black.png";
+static const char* object_door_kitchen = "texture/door_yellow.png";
+static const char* object_door_bedroom = "texture/door_red.png";
+static const char* object_door_bathroom = "texture/door_blue.png";
+static const char* beacon_warehouse = "texture/beacon_pink.png";
+static const char* beacon_living = "texture/beacon_black.png";
+static const char* beacon_kitchen = "texture/beacon_yellow.png";
+static const char* beacon_bedroom = "texture/beacon_red.png";
+static const char* beacon_bathroom = "texture/beacon_blue.png";
 static const char* img_start = "images/hero.png";
 //*************************************
 irrklang::ISoundEngine* engine = nullptr;
@@ -113,7 +122,16 @@ GLuint	WALL_living = 0;
 GLuint	WALL_kitchen = 0;
 GLuint	WALL_bedroom = 0;
 GLuint	WALL_bathroom = 0;
-GLuint	DOOR = 1;
+GLuint	DOOR_warehouse = 0;
+GLuint	DOOR_living = 0;
+GLuint	DOOR_kitchen = 0;
+GLuint	DOOR_bedroom = 0;
+GLuint	DOOR_bathroom = 0;
+GLuint	BEACON_warehouse = 0;
+GLuint	BEACON_living = 0;
+GLuint	BEACON_kitchen = 0;
+GLuint	BEACON_bedroom = 0;
+GLuint	BEACON_bathroom = 0;
 GLuint	START = 0;
 
 GLuint		VAO_IMAGE;
@@ -141,7 +159,9 @@ auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
 int		cur_tex = 0;
+int		cur_beacon_tex = 0;
 GLuint	wall_tex[5];
+GLuint  beacon_tex[5];
 map_t	cur_map;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
@@ -320,6 +340,7 @@ void load_game_scene(int scene) {
 	case 6:
 		//set objects
 		set_false();
+		walls[6].active = true;
 
 		//set camera
 		cam_xpos = 200.0f;
@@ -329,6 +350,10 @@ void load_game_scene(int scene) {
 		models[0].id = 0; 
 		cur_map = maps[0];
 		cur_tex = 0;
+		
+		//set beacon
+		cur_beacon_tex = 0;
+		obj_floor_pos(walls[6], scene, vec2(4, 9));
 
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
@@ -347,6 +372,7 @@ void load_game_scene(int scene) {
 		models[0].id = 4;
 		cur_map = maps[1];
 		cur_tex = 1;
+		cur_beacon_tex = 1;
 
 		//set wall
 		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
@@ -365,6 +391,7 @@ void load_game_scene(int scene) {
 		models[0].id = 5;
 		cur_map = maps[2];
 		cur_tex = 2;
+		cur_beacon_tex = 2;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -382,6 +409,7 @@ void load_game_scene(int scene) {
 		models[0].id = 6;
 		cur_map = maps[3];
 		cur_tex = 3;
+		cur_beacon_tex = 3;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -399,6 +427,7 @@ void load_game_scene(int scene) {
 		models[0].id = 7;
 		cur_map = maps[4];
 		cur_tex = 4;
+		cur_beacon_tex = 4;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -643,11 +672,21 @@ void render()
 		glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
 		glBindTexture(GL_TEXTURE_2D, wall_tex[cur_tex]);
 		glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
-		glBindTexture(GL_TEXTURE_2D, DOOR);
+		glBindTexture(GL_TEXTURE_2D, DOOR_warehouse);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, DOOR_living);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, DOOR_kitchen);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, DOOR_bedroom);
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, DOOR_bathroom);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, beacon_tex[cur_beacon_tex]);
 		i = 1;
 		for (auto& w : walls) {
 			//if (i > 1 && !b_2d) continue;
-			if (!w.active) continue;
+			if (!w.active) { i++; continue; }
 			w.setSize();
 			GLint uloc;
 			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
@@ -817,8 +856,19 @@ bool user_init()
 	WALL_bathroom = cg_create_texture(wall_bathroom, true); if (!WALL_bathroom) return false;
 	START = cg_create_texture(img_start, true); if (!START) return false;
 	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
-	
-	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
+
+	DOOR_warehouse = cg_create_texture(object_door_warehouse, true); if (!DOOR_warehouse) return false;
+	DOOR_living = cg_create_texture(object_door_living, true); if (!DOOR_living) return false;
+	DOOR_kitchen = cg_create_texture(object_door_kitchen, true); if (!DOOR_kitchen) return false;
+	DOOR_bedroom = cg_create_texture(object_door_bedroom, true); if (!DOOR_bedroom) return false;
+	DOOR_bathroom = cg_create_texture(object_door_bathroom, true); if (!DOOR_bathroom) return false;
+
+	BEACON_warehouse = cg_create_texture(beacon_warehouse, true); if (!BEACON_warehouse) return false;
+	BEACON_living = cg_create_texture(beacon_living, true); if (!BEACON_living) return false;
+	BEACON_kitchen = cg_create_texture(beacon_kitchen, true); if (!BEACON_kitchen) return false;
+	BEACON_bedroom = cg_create_texture(beacon_bedroom, true); if (!BEACON_bedroom) return false;
+	BEACON_bathroom = cg_create_texture(beacon_bathroom, true); if (!BEACON_bathroom) return false;
+	beacon_tex[0] = BEACON_warehouse; beacon_tex[1] = BEACON_living; beacon_tex[2] = BEACON_kitchen; beacon_tex[3] = BEACON_bedroom; beacon_tex[4] = BEACON_bathroom;
 
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
