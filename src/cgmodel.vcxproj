@@ -74,6 +74,8 @@
     <None Include="..\bin\shaders\image.vert" />
     <None Include="..\bin\shaders\model.frag" />
     <None Include="..\bin\shaders\model.vert" />
+    <None Include="..\bin\shaders\shadow.frag" />
+    <None Include="..\bin\shaders\shadow.vert" />
     <None Include="..\bin\shaders\skybox.frag" />
     <None Include="..\bin\shaders\skybox.vert" />
     <None Include="..\bin\shaders\text.frag" />
