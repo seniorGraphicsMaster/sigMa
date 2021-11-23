@@ -6,6 +6,7 @@
 #include "model.h"
 #include "map.h"
 #include "wall.h"
+#include "location.h"
 #include "particle.h"
 #include "irrKlang\irrKlang.h"
 #pragma comment(lib,"irrKlang.lib")
@@ -26,6 +27,7 @@ static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
 static const char* mesh_bedroom = "mesh/Room/bed/bedroom.obj";
 static const char* mesh_bathroom = "mesh/Room/bath/bathroom.obj";
 static const char* mesh_flower = "mesh/Enemy/Mflower/Mflower.obj";
+static const char* mesh_warehouse_key = "mesh/gimmick/key/key.obj";
 
 static const char* vert_shader_path = "shaders/model.vert";
 static const char* frag_shader_path = "shaders/model.frag";
@@ -43,7 +45,16 @@ static const char* wall_living = "texture/wall_living.jpg";
 static const char* wall_kitchen = "texture/wall_kitchen.jpg";
 static const char* wall_bedroom = "texture/wall_bedroom.jpg";
 static const char* wall_bathroom = "texture/wall_bathroom.jpg";
-static const char* object_door = "texture/door.png";
+static const char* object_door_warehouse = "texture/door.png";
+static const char* object_door_living = "texture/door_black.png";
+static const char* object_door_kitchen = "texture/door_yellow.png";
+static const char* object_door_bedroom = "texture/door_red.png";
+static const char* object_door_bathroom = "texture/door_blue.png";
+static const char* beacon_warehouse = "texture/beacon_pink.png";
+static const char* beacon_living = "texture/beacon_black.png";
+static const char* beacon_kitchen = "texture/beacon_yellow.png";
+static const char* beacon_bedroom = "texture/beacon_red.png";
+static const char* beacon_bathroom = "texture/beacon_blue.png";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
 
@@ -113,7 +124,16 @@ GLuint	WALL_living = 0;
 GLuint	WALL_kitchen = 0;
 GLuint	WALL_bedroom = 0;
 GLuint	WALL_bathroom = 0;
-GLuint	DOOR = 1;
+GLuint	DOOR_warehouse = 0;
+GLuint	DOOR_living = 0;
+GLuint	DOOR_kitchen = 0;
+GLuint	DOOR_bedroom = 0;
+GLuint	DOOR_bathroom = 0;
+GLuint	BEACON_warehouse = 0;
+GLuint	BEACON_living = 0;
+GLuint	BEACON_kitchen = 0;
+GLuint	BEACON_bedroom = 0;
+GLuint	BEACON_bathroom = 0;
 GLuint	START = 0;
 GLuint	HELP = 0;
 
@@ -145,7 +165,9 @@ int		scene = 0;
 int		difficulty = 0;
 int		temporary_scene = 0;
 int		cur_tex = 0;
+int		cur_beacon_tex = 0;
 GLuint	wall_tex[5];
+GLuint  beacon_tex[5];
 map_t	cur_map;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
@@ -349,6 +371,11 @@ void set_false() {
 		if (i != 0 && i != 1) m.active = false;
 		i++;
 	}
+	i = 0;
+	for (auto& w : walls) {
+		if (i != 0) w.active = false;
+		i++;
+	}
 	return;
 }
 
@@ -380,143 +407,85 @@ void load_game_scene(int scene) {
 		//set objects
 		b_2d = true;
 		set_false();
-		models[2].active = true;
-		models[3].active = true;
+		walls[6].active = true;
 
 		//set camera
 		cam_xpos = 200.0f;
 		cam_xmax = 315.0f;
+		
 		//set warehouse
 		models[0].id = 0; 
 		cur_map = maps[0];
 		cur_tex = 0;
-
-		//set hero position
-		hero->center = vec3(0.0f, -7.5f, 1.0f);
-		hero->cur_pos = vec2(2, 4);
-
-		//set wood position
-		models[2].center = vec3(-15.0f, -22.5f, 1.0f);
-		models[2].cur_pos = vec2(1, 3);
-		models[3].center = vec3(15.0f, 22.5f, 1.0f);
-		models[3].cur_pos = vec2(3, 6);
+		
+		//set beacon
+		cur_beacon_tex = 0;
+		obj_floor_pos(walls[6], scene, vec2(4, 9));
 
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
 		walls[0].size = vec2(154.0f, 50.0f);
-		walls[1].center = vec3(-39.48f, 52.5f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
-
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate();
 		
 		break;
 	case 7:
 		//set objects
 		set_false();
-		models[2].active = true;
-		models[3].active = true;
-		models[4].active = true;
 
 		//set camera
 		cam_xpos = 275.0f;
 		cam_xmax = 400.0f;
+
 		//set warehouse
 		models[0].id = 4;
 		cur_map = maps[1];
 		cur_tex = 1;
-
-		//set hero position
-		hero->center = vec3(-60.0f, 75.0f, 1.0f);
-		hero->cur_pos = vec2(3, 12);
-
-		//set wood position
-		models[2].center = vec3(-90.0f, -105.0f, 1.0f);
-		models[2].cur_pos = vec2(1, 0);
-		models[3].center = vec3(-75.0f, -105.0f, 1.0f);
-		models[3].cur_pos = vec2(2, 0);
-		models[4].center = vec3(30.0f, 105.0f, 1.0f);
-		models[4].cur_pos = vec2(9, 14);
-		models[4].theta = PI / 2;
-		
+		cur_beacon_tex = 1;
 
 		//set wall
 		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
 		walls[0].size = vec2(229.0f, 50.0f);
-		walls[1].center = vec3(-114.48f, 30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(120.0f, 1.0f);
 		break;
 	case 8:
 		//set objects
 		set_false();
-		models[2].active = true;
 
 		//set camera
-		cam_xpos = 237.5f;
-		cam_xmax = 330.0f;
+		cam_xpos = 200.0f;
+		cam_xmax = 315.0f;
+
 		//set warehouse
 		models[0].id = 5;
 		cur_map = maps[2];
 		cur_tex = 2;
-
-		//set hero position
-		hero->center = vec3(22.5f, 15.0f, 1.0f);
-		hero->cur_pos = vec2(6, 3);
-
-		//set wood position
-		models[2].center = vec3(37.5f, -15.0f, 1.0f);
-		models[2].cur_pos = vec2(7, 1);
+		cur_beacon_tex = 2;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(79.0f, 50.0f);
-		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
-
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(80.0f, 1.0f);
 		break;
 	case 9:
 		//set objects
 		set_false();
-		models[2].active = true;
 
 		//set camera
 		cam_xpos = 237.5f;
 		cam_xmax = 330.0f;
+
 		//set warehouse
 		models[0].id = 6;
 		cur_map = maps[3];
 		cur_tex = 3;
-
-		//set hero position
-		hero->center = vec3(7.5f, 7.5f, 1.0f);
-		hero->cur_pos = vec2(5, 5);
-
-		//set wood position
-		models[2].center = vec3(-37.5f, -37.5f, 1.0f);
-		models[2].cur_pos = vec2(2, 2);
+		cur_beacon_tex = 3;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(154.0f, 50.0f);
-		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(7.5f, 40.0f);
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(100.0f, 1.0f);
 		break;
 	case 10:
 		//set objects
 		set_false();
-		models[2].active = true;
 
 		//set camera
 		cam_xpos = 237.5f;
@@ -525,29 +494,72 @@ void load_game_scene(int scene) {
 		models[0].id = 7;
 		cur_map = maps[4];
 		cur_tex = 4;
-
-		//set hero position
-		hero->center = vec3(-7.5f, 0.0f, 1.0f);
-		hero->cur_pos = vec2(4, 2);
-
-		//set wood position
-		models[2].center = vec3(-52.5f, -15.0f, 1.0f);
-		models[2].cur_pos = vec2(1, 1);
+		cur_beacon_tex = 4;
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
 		walls[0].size = vec2(79.0f, 50.0f);
-		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(80.0f, 1.0f);
 		break;
 	default:
 		break;
 	}
 }
+
+void init_state(int level) {
+
+	switch (level) {
+	case 1:
+		//active obj
+		models[2].active = true;
+		models[5].active = true;
+
+		//set hero pos
+		obj_3d_pos(*hero, scene, vec2(2, 4));
+
+		//set wood pos
+		obj_3d_pos(models[2], scene, vec2(1, 5));
+
+		//set key pos
+		obj_3d_pos(models[5], scene, vec2(0, 0));
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	}
+
+}
+
+void load_level(int level) {
+	
+	switch (level) {
+	case 1:
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate();
+
+		scene = 6;
+		load_game_scene(scene);
+		init_state(level);
+
+
+
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	}
+	
+	
+}
+
+
+
+
+
 #pragma endregion
 
 
@@ -616,7 +628,7 @@ void update()
 
 	// update projection matrix
 	cam.aspect_ratio = window_size.x/float(window_size.y);
-	if (b_2d) { // Ä«¸Þ¶ó ºÎºÐ
+	if (b_2d) { // Ä«ï¿½Þ¶ï¿½ ï¿½Îºï¿½
 		mat4 aspect_matrix =
 		{
 			std::min(1 / cam.aspect_ratio,1.0f), 0, 0, 0,
@@ -624,13 +636,13 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // º¸ÀÌ´Â ¿µ¿ª
-		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // ½ÃÁ¡ È®Á¤
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½ï¿½ï¿½ï¿½
+		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
 		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
-		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //º¸ÀÌ´Â ¿µ¿ª
+		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½ï¿½ï¿½ï¿½
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	}
 
@@ -730,10 +742,21 @@ void render()
 		glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
 		glBindTexture(GL_TEXTURE_2D, wall_tex[cur_tex]);
 		glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
-		glBindTexture(GL_TEXTURE_2D, DOOR);
+		glBindTexture(GL_TEXTURE_2D, DOOR_warehouse);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, DOOR_living);
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, DOOR_kitchen);
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, DOOR_bedroom);
+		glActiveTexture(GL_TEXTURE6);
+		glBindTexture(GL_TEXTURE_2D, DOOR_bathroom);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, beacon_tex[cur_beacon_tex]);
 		i = 1;
 		for (auto& w : walls) {
-			if (i > 0 && !b_2d) continue;
+			//if (i > 1 && !b_2d) continue;
+			if (!w.active) { i++; continue; }
 			w.setSize();
 			GLint uloc;
 			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
@@ -741,7 +764,7 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // º¯°æ ¿©Áö
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			i++;
 		}
 		
@@ -904,8 +927,19 @@ bool user_init()
 	START = cg_create_texture(img_start, true); if (!START) return false;
 	HELP = cg_create_texture(img_help, true); if (!START) return false;
 	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
-	
-	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
+
+	DOOR_warehouse = cg_create_texture(object_door_warehouse, true); if (!DOOR_warehouse) return false;
+	DOOR_living = cg_create_texture(object_door_living, true); if (!DOOR_living) return false;
+	DOOR_kitchen = cg_create_texture(object_door_kitchen, true); if (!DOOR_kitchen) return false;
+	DOOR_bedroom = cg_create_texture(object_door_bedroom, true); if (!DOOR_bedroom) return false;
+	DOOR_bathroom = cg_create_texture(object_door_bathroom, true); if (!DOOR_bathroom) return false;
+
+	BEACON_warehouse = cg_create_texture(beacon_warehouse, true); if (!BEACON_warehouse) return false;
+	BEACON_living = cg_create_texture(beacon_living, true); if (!BEACON_living) return false;
+	BEACON_kitchen = cg_create_texture(beacon_kitchen, true); if (!BEACON_kitchen) return false;
+	BEACON_bedroom = cg_create_texture(beacon_bedroom, true); if (!BEACON_bedroom) return false;
+	BEACON_bathroom = cg_create_texture(beacon_bathroom, true); if (!BEACON_bathroom) return false;
+	beacon_tex[0] = BEACON_warehouse; beacon_tex[1] = BEACON_living; beacon_tex[2] = BEACON_kitchen; beacon_tex[3] = BEACON_bedroom; beacon_tex[4] = BEACON_bathroom;
 
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
@@ -917,6 +951,7 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_bedroom));
 	pMesh.emplace_back(load_model(mesh_bathroom));
 	pMesh.emplace_back(load_model(mesh_flower));
+	pMesh.emplace_back(load_model(mesh_warehouse_key));
 
 	hero = &models[1];
 
@@ -960,7 +995,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
 			scene++;
 			//if (scene == 6) load_game_scene(scene);
-			if (scene == 6) load_game_scene(6);
+			if (scene == 6) load_level(1);
 		}					
 		else if (key == GLFW_KEY_F && !b_game)
 		{
@@ -976,7 +1011,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 		}
 		else if (key == GLFW_KEY_R) {
-			load_game_scene(6);
+			load_level(1);
 			b_game = false;
 			engine->stopAllSounds();
 			engine->play2D(background_src, true);

@@ -52,6 +52,7 @@
     <ClInclude Include="wall.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="location.h">
     <ClInclude Include="particle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
