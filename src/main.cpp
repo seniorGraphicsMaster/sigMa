@@ -45,6 +45,8 @@ static const char* wall_bedroom = "texture/wall_bedroom.jpg";
 static const char* wall_bathroom = "texture/wall_bathroom.jpg";
 static const char* object_door = "texture/door.png";
 static const char* img_start = "images/hero.png";
+static const char* img_help = "images/hero_background.png";
+
 //*************************************
 irrklang::ISoundEngine* engine = nullptr;
 irrklang::ISoundSource* background_src = nullptr;
@@ -113,6 +115,7 @@ GLuint	WALL_bedroom = 0;
 GLuint	WALL_bathroom = 0;
 GLuint	DOOR = 1;
 GLuint	START = 0;
+GLuint	HELP = 0;
 
 GLuint		VAO_IMAGE;
 GLuint		VAO_BACKGROUND;			// vertex array for text objects
@@ -129,6 +132,7 @@ GLuint		depthMap = 0;
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_2d = false;
+bool	b_help = false;
 bool	pause = true;
 bool	b_game = false;
 float	t;
@@ -138,6 +142,8 @@ auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
+int		difficulty = 0;
+int		temporary_scene = 0;
 int		cur_tex = 0;
 GLuint	wall_tex[5];
 map_t	cur_map;
@@ -262,36 +268,74 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("DOM_HWANG_CHA", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please 's' to start", 50, 400, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
 		break;
 	case 1:
-		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-		b_2d = true;
-		break;
-	case 2:
-		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-		break;
-	case 3:
-		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-		break;
-	case 4:
-		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-		break;
-	case 5:
-		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, HELP);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		
 		break;
+	case 2:
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, HELP);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 3:
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, HELP);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("...... ", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 4:
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, HELP);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 5:
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, HELP);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text("Please choose the difficulty of the game", 30, 100, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#1 Easy - Number of room : 2", 30, 150, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#2 Middle - Number of room : 4", 30, 200, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#3 Hard - Number of room : 5", 30, 250, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press number of the difficulty to start", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	
 	default:
 		break;
 	}
@@ -308,10 +352,33 @@ void set_false() {
 	return;
 }
 
+void load_help_scene() {
+	
+	b_2d = false;
+	glUseProgram(program_img);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, HELP);
+	glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+	glBindVertexArray(VAO_IMAGE);
+	// render quad vertices
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	float dpi_scale = cg_get_dpi_scale();
+	render_text("Instruction", 200, 60, 1.0f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+	render_text("Room escape game that goes beyond 2D and 3D.", 100, 100, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+
+	render_text("You have to escape within the limited time.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	render_text("You can move using up, down, left, right keys.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	render_text("Press 'F' button to change the dimension.", 30, 300, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	render_text("Press 'A' button to pull the object.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	render_text("Press 'S' button to push the object.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	render_text("You can reset the game by using 'R' button.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+}
+
 void load_game_scene(int scene) {
 	switch (scene) {
 	case 6:
 		//set objects
+		b_2d = true;
 		set_false();
 		models[2].active = true;
 		models[3].active = true;
@@ -607,7 +674,6 @@ void render_init() {
 
 void render()
 {
-
 	render_init();
 
 	// notify GL that we use our own program
@@ -621,6 +687,10 @@ void render()
 
 	// scene < 6 (game story)
 	load_start_scene(scene);
+	if (b_help == true) {
+		load_help_scene();
+	}
+	glUseProgram(program);
 	if (scene > 5) {
 		glUseProgram(program);
 		int i = 0;
@@ -832,6 +902,7 @@ bool user_init()
 	WALL_bedroom = cg_create_texture(wall_bedroom, true); if (!WALL_bedroom) return false;
 	WALL_bathroom = cg_create_texture(wall_bathroom, true); if (!WALL_bathroom) return false;
 	START = cg_create_texture(img_start, true); if (!START) return false;
+	HELP = cg_create_texture(img_help, true); if (!START) return false;
 	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
 	
 	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
@@ -866,7 +937,23 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	if (action == GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
+			b_help = true;
+			temporary_scene = scene;
+			scene = -1;
+		}
+		else if (key == GLFW_KEY_1) {
+			difficulty = 1;
+			scene++;
+		}
+		else if (key == GLFW_KEY_2) {
+			difficulty = 2;
+			scene++;
+		}
+		else if (key == GLFW_KEY_3) {
+			difficulty = 3;
+			scene++;
+		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
@@ -917,6 +1004,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_DOWN && !b_game) {
 			if (!b_2d) hero->down_move(cur_map, models);
 		}
+		
 	}
 
 	if (action == GLFW_RELEASE) {
@@ -927,6 +1015,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_S)
 		{
 			if (hero->action != PUSH) hero->action = 0;
+		}
+		else if (key == GLFW_KEY_F1) {
+			b_help = false;
+			b_2d = true;
+			scene = temporary_scene;
 		}
 	}
 }
