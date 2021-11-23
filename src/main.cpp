@@ -14,9 +14,7 @@ void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, 
 
 //*************************************
 // global constants
-static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
-static const char*	vert_shader_path = "shaders/model.vert";
-static const char*	frag_shader_path = "shaders/model.frag";
+static const char*	window_name = "sigMa";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
@@ -25,9 +23,12 @@ static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
 static const char* mesh_bedroom = "mesh/Room/bed/bedroom.obj";
 static const char* mesh_bathroom = "mesh/Room/bath/bathroom.obj";
 
-
+static const char* vert_shader_path = "shaders/model.vert";
+static const char* frag_shader_path = "shaders/model.frag";
 static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
 static const char* frag_background_path = "shaders/skybox.frag";
+static const char* vert_image = "shaders/image.vert";		// text vertex shaders
+static const char* frag_image = "shaders/image.frag";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
@@ -36,6 +37,7 @@ static const char* wall_kitchen = "texture/wall_kitchen.jpg";
 static const char* wall_bedroom = "texture/wall_bedroom.jpg";
 static const char* wall_bathroom = "texture/wall_bathroom.jpg";
 static const char* object_door = "texture/door.png";
+static const char* img_start = "images/hero.png";
 
 //*************************************
 // common structures
@@ -89,7 +91,7 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 
 //*************************************
 // OpenGL objects
-GLuint	program	= 0;	// ID holder for GPU program
+	
 GLuint	wall_vertex_array = 0;
 GLuint	WALL_warehouse = 0;
 GLuint	WALL_living = 0;
@@ -97,15 +99,19 @@ GLuint	WALL_kitchen = 0;
 GLuint	WALL_bedroom = 0;
 GLuint	WALL_bathroom = 0;
 GLuint	DOOR = 1;
+GLuint	START = 0;
 
+GLuint		VAO_IMAGE;
 GLuint		VAO_BACKGROUND;			// vertex array for text objects
-GLuint		program_background;	// GPU program for text render
 
+GLuint		program = 0;		// ID holder for GPU program
+GLuint		program_background = 0;	// GPU program for text render
+GLuint		program_img = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
-bool	b_2d = true;
+bool	b_2d = false;
 float	t;
 float	start_t;
 bool	pause = true;
@@ -226,9 +232,17 @@ GLuint loadCubemap(std::vector<std::string> faces) {
 void load_start_scene(int scene) {
 	
 	float dpi_scale = cg_get_dpi_scale();
+	
 
 	switch (scene) {
 	case 0:
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, START);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
 		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
 		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
@@ -236,6 +250,7 @@ void load_start_scene(int scene) {
 	case 1:
 		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		b_2d = true;
 		break;
 	case 2:
 		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
@@ -256,6 +271,7 @@ void load_start_scene(int scene) {
 		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		
 		break;
 	default:
 		break;
@@ -572,11 +588,11 @@ void render()
 	render_init();
 
 	// notify GL that we use our own program
-	glUseProgram(program);
+	
 
 	// scene < 6 (game story)
 	load_start_scene(scene);
-
+	glUseProgram(program);
 	if (scene > 5) {
 
 		int i = 0;
@@ -726,7 +742,31 @@ bool init_background()
 	skyboxTexture = loadCubemap(skyboxes);
 	return true;
 }
+bool init_image()
+{
+	// create corners and vertices
+	vertex corners[4];
+	corners[0].pos = vec3(-1.0f, -1.0f, 0.5f);	corners[0].tex = vec2(0.0f, 0.0f);
+	corners[1].pos = vec3(+1.0f, -1.0f, 0.5f);	corners[1].tex = vec2(1.0f, 0.0f);
+	corners[2].pos = vec3(+1.0f, +1.0f, 0.5f);	corners[2].tex = vec2(1.0f, 1.0f);
+	corners[3].pos = vec3(-1.0f, +1.0f, 0.5f);	corners[3].tex = vec2(0.0f, 1.0f);
+	vertex vertices[6] = { corners[0], corners[1], corners[2], corners[0], corners[2], corners[3] };
 
+	// generation of vertex buffer is the same, but use vertices instead of corners
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (VAO_IMAGE) glDeleteVertexArrays(1, &VAO_IMAGE);
+	VAO_IMAGE = cg_create_vertex_array(vertex_buffer);
+	if (!VAO_IMAGE) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
+
+	program_img = cg_create_program(vert_image, frag_image);
+	if (!program_img) return false;
+	return true;
+}
 bool user_init()
 {
 	// log hotkeys
@@ -748,6 +788,7 @@ bool user_init()
 	WALL_kitchen = cg_create_texture(wall_kitchen, true); if (!WALL_kitchen) return false;
 	WALL_bedroom = cg_create_texture(wall_bedroom, true); if (!WALL_bedroom) return false;
 	WALL_bathroom = cg_create_texture(wall_bathroom, true); if (!WALL_bathroom) return false;
+	START = cg_create_texture(img_start, true); if (!START) return false;
 	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
 	
 	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
@@ -767,6 +808,7 @@ bool user_init()
 	if (pMesh.empty()) { printf("Unable to load mesh\n"); return false; }
 	if (!init_text()) return false;
 	if (!init_background()) return false;
+	if (!init_image()) return false;
 	return true;
 }
 

@@ -4,7 +4,6 @@ layout (location=2) in vec2 texcoord;
 out vec2 tc;
 
 uniform mat4 text_matrix;
-uniform int mode;
 
 void main()
 {

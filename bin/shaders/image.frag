@@ -5,15 +5,15 @@
 	precision highp float; // default precision needs to be defined
 #endif
 
-in	vec2 tc;
+// input from vertex shader
+in vec2 tc;
 
-out	vec4 fragColor;
+// the only output variable
+out vec4 fragColor;
 
-uniform sampler2D	TEXT;
-uniform vec4		text_color;
+uniform sampler2D	TEX;
 
 void main()
-{    
-    float alpha = texture( TEXT, tc ).r;
-    fragColor = text_color * vec4( 1, 1, 1, alpha );
-}  
+{	
+	fragColor = texture( TEX, tc );
+}

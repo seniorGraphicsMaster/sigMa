@@ -114,6 +114,7 @@ bool init_text()
 	return true;
 }
 
+
 void render_text(std::string text, GLint _x, GLint _y, GLfloat scale, vec4 color, GLfloat dpi_scale)
 {
 	// apply dpi_scale
@@ -161,7 +162,7 @@ void render_text(std::string text, GLint _x, GLint _y, GLfloat scale, vec4 color
 
 		text_matrix = text_offset * text_translate * text_size * text_matrix;
 		glUniformMatrix4fv(glGetUniformLocation(program_text, "text_matrix"), 1, GL_TRUE, text_matrix);
-
+		glUniform1i(glGetUniformLocation(program_text, "mode"), 0);
 		// Render glyph texture over quad
 		glBindTexture(GL_TEXTURE_2D, ch.textureID);
 
