@@ -12,7 +12,7 @@
 // forward declarations for freetype text
 bool init_text();
 void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, GLfloat dpi_scale = 1.0f);
-
+mat4 Ortho(float left, float right, float bottom, float top, float dnear, float dfar);
 //*************************************
 // global constants
 static const char*	window_name = "sigMa";
@@ -73,6 +73,8 @@ struct material_t
 	float	shininess = 2000.0f;
 };
 
+
+
 struct herostate
 {
 	float energy;
@@ -109,6 +111,10 @@ GLuint		VAO_BACKGROUND;			// vertex array for text objects
 GLuint		program = 0;		// ID holder for GPU program
 GLuint		program_background = 0;	// GPU program for text render
 GLuint		program_img = 0;
+GLuint		program_shadow = 0;
+
+GLuint		shadowfbo = 0;
+GLuint		depthMap = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -126,7 +132,7 @@ int		scene = 0;
 int		cur_tex = 0;
 GLuint	wall_tex[5];
 map_t	cur_map;
-
+const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
 GLuint skyboxTexture;
@@ -608,9 +614,8 @@ void render()
 
 	// scene < 6 (game story)
 	load_start_scene(scene);
-	glUseProgram(program);
 	if (scene > 5) {
-
+		glUseProgram(program);
 		int i = 0;
 		glActiveTexture(GL_TEXTURE0);
 		// bind vertex array object
@@ -662,6 +667,7 @@ void render()
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
 			i++;
 		}
+		
 		if (scene == 6) {
 			pause = false;
 			float dpi_scale = cg_get_dpi_scale();
@@ -784,6 +790,7 @@ bool init_image()
 	if (!program_img) return false;
 	return true;
 }
+
 bool user_init()
 {
 	// log hotkeys

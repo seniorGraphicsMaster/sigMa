@@ -7,9 +7,9 @@
 
 // input from vertex shader
 in vec4 epos;
+in vec4 wpos;
 in vec3 norm;
 in vec2 tc;
-
 // the only output variable
 out vec4 fragColor;
 
@@ -45,4 +45,6 @@ void main()
 	if(mode==0){
 		fragColor = phong( l, n, h, fragColor );
 	}
+
+	
 }

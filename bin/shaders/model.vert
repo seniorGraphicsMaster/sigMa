@@ -5,17 +5,18 @@ layout(location=2) in vec2 texcoord;
 
 // outputs of vertex shader = input to fragment shader
 out vec4 epos;	// eye-space position
+out vec4 wpos;
 out vec3 norm;	// per-vertex normal before interpolation
 out vec2 tc;	// texture coordinate
 // matrices
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
-
+uniform mat4 lightMatrix;
 
 void main()
 {
-	vec4 wpos = model_matrix * vec4(position,1);
+	wpos = model_matrix * vec4(position,1);
 	epos = view_matrix * wpos;
 	gl_Position = projection_matrix * epos;
 
