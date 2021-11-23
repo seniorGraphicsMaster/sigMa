@@ -8,6 +8,7 @@ struct wall_t
 	vec3	center = vec3(0);		// 2D position for translation
 	vec2	size = vec2(0);
 	float	theta = 0.0f;
+	float	z_theta = 0.0f;
 
 	mat4	model_matrix;
 
@@ -26,6 +27,7 @@ inline void wall_t::setSize()
 {
 
 	float c = cos(theta), s = sin(theta);
+	float cz = cos(z_theta), sz = sin(z_theta);
 
 	mat4 scale_matrix =
 	{
@@ -43,6 +45,14 @@ inline void wall_t::setSize()
 		0, 0, 0, 1
 	};
 
+	mat4 z_rotation_matrix =
+	{
+		1, 0, 0, 0,
+		0, cz, -sz, 0,
+		0, sz, cz, 0,
+		0, 0, 0, 1
+	};
+
 	mat4 translate_matrix =
 	{
 		1, 0, 0, center.x,
@@ -51,7 +61,7 @@ inline void wall_t::setSize()
 		0, 0, 0, 1
 	};
 
-	model_matrix = translate_matrix * rotation_matrix * scale_matrix;
+	model_matrix = translate_matrix * z_rotation_matrix * rotation_matrix * scale_matrix;
 }
 
 

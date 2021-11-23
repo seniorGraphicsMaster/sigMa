@@ -304,6 +304,7 @@ void load_game_scene(int scene) {
 		//set camera
 		cam_xpos = 200.0f;
 		cam_xmax = 315.0f;
+		
 		//set warehouse
 		models[0].id = 0; 
 		cur_map = maps[0];
@@ -321,9 +322,13 @@ void load_game_scene(int scene) {
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
 		walls[0].size = vec2(154.0f, 50.0f);
-		obj_2d_pos(walls[1], scene, 1, 2, vec2(1, 2));
-		//walls[1].center = vec3(-39.48f, 74.98f, 21.0f);
-		//walls[1].size = vec2(15.0f, 40.0f);
+		//obj_2d_pos(walls[1], scene, 1, 2, vec2(1, 2));
+		obj_floor_pos(walls[1], scene, vec2(1, 5));
+
+		//walls[1].center = vec3(0.0f, 52.5f, 1.01f);
+		//walls[1].size = vec2(15.0f, 15.0f);
+		//walls[1].theta = -PI / 2;
+		//walls[1].z_theta = - PI / 2;
 
 		//time set
 		start_t = float(glfwGetTime());
