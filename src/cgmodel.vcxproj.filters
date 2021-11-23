@@ -53,6 +53,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="location.h">
+    <ClInclude Include="particle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -79,6 +80,12 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="..\bin\shaders\image.vert">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\bin\shaders\particle.frag">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="..\bin\shaders\particle.vert">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

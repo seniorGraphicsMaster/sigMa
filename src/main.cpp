@@ -7,6 +7,9 @@
 #include "map.h"
 #include "wall.h"
 #include "location.h"
+#include "particle.h"
+#include "irrKlang\irrKlang.h"
+#pragma comment(lib,"irrKlang.lib")
 
 //*******************************************************************
 // forward declarations for freetype text
@@ -32,7 +35,10 @@ static const char* vert_background_path = "shaders/skybox.vert";		// text vertex
 static const char* frag_background_path = "shaders/skybox.frag";
 static const char* vert_image = "shaders/image.vert";		// text vertex shaders
 static const char* frag_image = "shaders/image.frag";
-
+//*************************************
+static const char* background_sound = "sounds/roki.wav";
+static const char* gameover_sound = "sounds/gameover.mp3";
+static const char* gameend_sound = "sounds/gameend.mp3";
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
 static const char* wall_living = "texture/wall_living.jpg";
@@ -41,7 +47,11 @@ static const char* wall_bedroom = "texture/wall_bedroom.jpg";
 static const char* wall_bathroom = "texture/wall_bathroom.jpg";
 static const char* object_door = "texture/door.png";
 static const char* img_start = "images/hero.png";
-
+//*************************************
+irrklang::ISoundEngine* engine = nullptr;
+irrklang::ISoundSource* background_src = nullptr;
+irrklang::ISoundSource* gameover_src = nullptr;
+irrklang::ISoundSource* gameend_src = nullptr;
 //*************************************
 // common structures
 struct camera
@@ -522,7 +532,7 @@ void update()
 
 	// update projection matrix
 	cam.aspect_ratio = window_size.x/float(window_size.y);
-	if (b_2d) { // Ä«¸Þ¶ó ºÎºÐ
+	if (b_2d) { // Ä«ï¿½Þ¶ï¿½ ï¿½Îºï¿½
 		mat4 aspect_matrix =
 		{
 			std::min(1 / cam.aspect_ratio,1.0f), 0, 0, 0,
@@ -530,13 +540,13 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // º¸ÀÌ´Â ¿µ¿ª
-		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // ½ÃÁ¡ È®Á¤
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½ï¿½ï¿½ï¿½
+		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // ï¿½ï¿½ï¿½ï¿½ È®ï¿½ï¿½
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
 		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
-		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //º¸ÀÌ´Â ¿µ¿ª
+		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //ï¿½ï¿½ï¿½Ì´ï¿½ ï¿½ï¿½ï¿½ï¿½
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	}
 
@@ -585,6 +595,7 @@ void render()
 
 	// notify GL that we use our own program
 	if (b_game) {
+		
 		float dpi_scale = cg_get_dpi_scale();
 		render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
@@ -644,7 +655,7 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // º¯°æ ¿©Áö
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 			i++;
 		}
 		
@@ -770,7 +781,19 @@ bool init_image()
 	if (!program_img) return false;
 	return true;
 }
+bool init_sound() {
 
+	engine = irrklang::createIrrKlangDevice();
+	if (!engine) return false;
+	background_src = engine->addSoundSourceFromFile(absolute_path(background_sound));
+	gameover_src = engine->addSoundSourceFromFile(absolute_path(gameover_sound));
+	gameend_src = engine->addSoundSourceFromFile(absolute_path(gameend_sound));
+	background_src->setDefaultVolume(0.3f);
+	gameover_src->setDefaultVolume(0.3f);
+	gameend_src->setDefaultVolume(0.7f);
+	engine->play2D(background_src, true);
+	return true;
+}
 bool user_init()
 {
 	// log hotkeys
@@ -815,6 +838,7 @@ bool user_init()
 	if (!init_text()) return false;
 	if (!init_background()) return false;
 	if (!init_image()) return false;
+	if (!init_sound()) return false;
 	return true;
 }
 
@@ -840,12 +864,20 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			b_2d = !b_2d;
 			if (b_2d) {
-				if (game_over_chk(0)) b_game = true;
+				if (game_over_chk(0)) { 
+					b_game = true; 
+					if (engine->isCurrentlyPlaying(background_src)) {
+						engine->stopAllSounds();
+						engine->play2D(gameover_src, false);
+					}
+				}
 			}
 		}
 		else if (key == GLFW_KEY_R) {
 			load_level(1);
 			b_game = false;
+			engine->stopAllSounds();
+			engine->play2D(background_src, true);
 			//load_game_scene(scene);
 		}
 		else if (key == GLFW_KEY_A && !b_game)
@@ -909,6 +941,7 @@ void user_finalize()
 {
 	delete_texture_cache();
 	pMesh.clear();
+	engine->drop();
 }
 
 int main( int argc, char* argv[] )
