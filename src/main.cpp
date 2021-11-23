@@ -113,9 +113,11 @@ GLuint		program_img = 0;
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
 bool	b_2d = false;
+bool	pause = true;
+bool	b_game = false;
 float	t;
 float	start_t;
-bool	pause = true;
+
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
@@ -594,7 +596,12 @@ void render()
 	render_init();
 
 	// notify GL that we use our own program
-	
+	if (b_game) {
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		goto skip;
+	}
 
 	// scene < 6 (game story)
 	load_start_scene(scene);
@@ -659,10 +666,10 @@ void render()
 			render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 			render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 			render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-			
+		
 		}
 	}
-
+	skip:
 	// swap front and back buffers, and display to screen
 	glfwSwapBuffers(window);
 }
@@ -838,37 +845,38 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			//if (scene == 6) load_game_scene(scene);
 			if (scene == 6) load_game_scene(6);
 		}					
-		else if (key == GLFW_KEY_F)
+		else if (key == GLFW_KEY_F && !b_game)
 		{
 			b_2d = !b_2d;
 			if (b_2d) {
-				if (game_over_chk(0)) printf("Game Over");
+				if (game_over_chk(0)) b_game = true;
 			}
 		}
 		else if (key == GLFW_KEY_R) {
 			load_game_scene(6);
+			b_game = false;
 			//load_game_scene(scene);
 		}
-		else if (key == GLFW_KEY_A)
+		else if (key == GLFW_KEY_A && !b_game)
 		{
 			if (hero->action != PULL) hero->action = PUSH;
 		}
-		else if (key == GLFW_KEY_S)
+		else if (key == GLFW_KEY_S && !b_game)
 		{
 			if (hero->action != PUSH) hero->action = PULL;
 		}
-		else if (key == GLFW_KEY_RIGHT) {
+		else if (key == GLFW_KEY_RIGHT && !b_game) {
 			if (!b_2d) hero->right_move(cur_map, models);
 			else hero->right_move_2d(cur_map, models);
 		}
-		else if (key == GLFW_KEY_LEFT) {
+		else if (key == GLFW_KEY_LEFT && !b_game) {
 			if (!b_2d) hero->left_move(cur_map, models);
 			else hero->left_move_2d(cur_map, models);
 		}
-		else if (key == GLFW_KEY_UP) {
+		else if (key == GLFW_KEY_UP && !b_game) {
 			if (!b_2d) hero->up_move(cur_map, models);
 		}
-		else if (key == GLFW_KEY_DOWN) {
+		else if (key == GLFW_KEY_DOWN && !b_game) {
 			if (!b_2d) hero->down_move(cur_map, models);
 		}
 	}
