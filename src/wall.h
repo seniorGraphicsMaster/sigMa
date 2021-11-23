@@ -30,6 +30,8 @@ inline std::vector<wall_t> set_wall() {
 	arr.emplace_back(m);
 	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 5
 	arr.emplace_back(m);
+	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon
+	arr.emplace_back(m);
 	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//charge
 	arr.emplace_back(m);
 	return arr;

@@ -55,6 +55,7 @@ static const char* beacon_living = "texture/beacon_black.png";
 static const char* beacon_kitchen = "texture/beacon_yellow.png";
 static const char* beacon_bedroom = "texture/beacon_red.png";
 static const char* beacon_bathroom = "texture/beacon_blue.png";
+static const char* img_charge = "texture/charge.jpg";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
 
@@ -134,6 +135,7 @@ GLuint	BEACON_living = 0;
 GLuint	BEACON_kitchen = 0;
 GLuint	BEACON_bedroom = 0;
 GLuint	BEACON_bathroom = 0;
+GLuint  CHARGE = 0;
 GLuint	START = 0;
 GLuint	HELP = 0;
 
@@ -168,7 +170,9 @@ int		cur_tex = 0;
 int		cur_beacon_tex = 0;
 GLuint	wall_tex[5];
 GLuint  beacon_tex[5];
+
 map_t	cur_map;
+int		keys[6];
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
@@ -213,6 +217,7 @@ int game_over_chk(int type) {
 
 	return 0 ;
 }
+
 std::string EnergyBar(float t) {
 	std::string s;
 	if (!pause) {
@@ -408,6 +413,7 @@ void load_game_scene(int scene) {
 		b_2d = true;
 		set_false();
 		walls[6].active = true;
+		walls[7].active = true;
 
 		//set camera
 		cam_xpos = 200.0f;
@@ -418,9 +424,12 @@ void load_game_scene(int scene) {
 		cur_map = maps[0];
 		cur_tex = 0;
 		
-		//set beacon
+		//set charge
 		cur_beacon_tex = 0;
-		obj_floor_pos(walls[6], scene, vec2(4, 9));
+		obj_floor_pos(walls[6], scene, vec2(3, 9));
+
+		//set beacon
+		obj_floor_pos(walls[7], scene, vec2(4, 9));
 
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
@@ -510,6 +519,9 @@ void init_state(int level) {
 
 	switch (level) {
 	case 1:
+		//key setting
+		for (int i = 0; i < 6; i++) keys[i] = 0;
+
 		//active obj
 		models[2].active = true;
 		models[5].active = true;
@@ -753,6 +765,8 @@ void render()
 		glBindTexture(GL_TEXTURE_2D, DOOR_bathroom);
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, beacon_tex[cur_beacon_tex]);
+		glActiveTexture(GL_TEXTURE8);
+		glBindTexture(GL_TEXTURE_2D, CHARGE);
 		i = 1;
 		for (auto& w : walls) {
 			//if (i > 1 && !b_2d) continue;
@@ -941,6 +955,8 @@ bool user_init()
 	BEACON_bathroom = cg_create_texture(beacon_bathroom, true); if (!BEACON_bathroom) return false;
 	beacon_tex[0] = BEACON_warehouse; beacon_tex[1] = BEACON_living; beacon_tex[2] = BEACON_kitchen; beacon_tex[3] = BEACON_bedroom; beacon_tex[4] = BEACON_bathroom;
 
+	CHARGE = cg_create_texture(img_charge, true); if (!CHARGE) return false;
+
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
@@ -980,7 +996,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_1) {
 			difficulty = 1;
 			scene++;
-			load_level(1);
+			load_level(difficulty);
 		}
 		else if (key == GLFW_KEY_2) {
 			difficulty = 2;
@@ -1024,18 +1040,21 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			if (hero->action != PUSH) hero->action = PULL;
 		}
 		else if (key == GLFW_KEY_RIGHT && !b_game) {
-			if (!b_2d) hero->right_move(cur_map, models);
+			if (!b_2d) hero->right_move(cur_map, models, keys);
 			else hero->right_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_LEFT && !b_game) {
-			if (!b_2d) hero->left_move(cur_map, models);
+			if (!b_2d) {
+				hero->left_move(cur_map, models, keys);
+				printf("%d\n", keys[1]);
+			} 
 			else hero->left_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_UP && !b_game) {
-			if (!b_2d) hero->up_move(cur_map, models);
+			if (!b_2d) hero->up_move(cur_map, models, keys);
 		}
 		else if (key == GLFW_KEY_DOWN && !b_game) {
-			if (!b_2d) hero->down_move(cur_map, models);
+			if (!b_2d) hero->down_move(cur_map, models, keys);
 		}
 		
 	}

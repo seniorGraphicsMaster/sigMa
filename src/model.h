@@ -29,10 +29,10 @@ struct model_t
 
 	// public functions
 	void	update(float t);
-	void	left_move(map_t& cur_map, std::vector<model_t>& models);
-	void	right_move(map_t& cur_map, std::vector<model_t>& models);
-	void	up_move(map_t& cur_map, std::vector<model_t>& models);
-	void	down_move(map_t& cur_map, std::vector<model_t>& models);
+	void	left_move(map_t& cur_map, std::vector<model_t>& models, int* keys);
+	void	right_move(map_t& cur_map, std::vector<model_t>& models, int* keys);
+	void	up_move(map_t& cur_map, std::vector<model_t>& models, int* keys);
+	void	down_move(map_t& cur_map, std::vector<model_t>& models, int* keys);
 	void	left_move_2d(map_t& cur_map, std::vector<model_t>& models);
 	void	right_move_2d(map_t& cur_map, std::vector<model_t>& models);
 };
@@ -58,7 +58,7 @@ inline std::vector<model_t> set_pos() {
 
 
 #pragma region 3d_move
-inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
+inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models, int* keys) {
 	vec2 next_pos = vec2(cur_pos.x - 1, cur_pos.y);
 
 	//rotation
@@ -70,7 +70,12 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 1;
+		models[next_val].active = false;
+		cur_map.map[(int)next_pos.x][(int)next_pos.y] = 0;
+	}
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
@@ -105,7 +110,7 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
 	center.x -= 15.0f;
 }
 
-inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
+inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models, int* keys) {
 	vec2 next_pos = vec2(cur_pos.x + 1, cur_pos.y);
 
 	//rotation
@@ -117,7 +122,12 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 1;
+		models[next_val].active = false;
+		cur_map.map[(int)next_pos.x][(int)next_pos.y] = 0;
+	}
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
@@ -153,7 +163,7 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 
 }
 
-inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
+inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models, int* keys) {
 
 	vec2 next_pos = vec2(cur_pos.x, cur_pos.y + 1);
 
@@ -166,7 +176,12 @@ inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 1;
+		models[next_val].active = false;
+		cur_map.map[(int)next_pos.x][(int)next_pos.y] = 0;
+	}
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
@@ -201,7 +216,7 @@ inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
 	center.y += 15.0f;
 
 }
-inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
+inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models, int* keys) {
 
 	vec2 next_pos = vec2(cur_pos.x, cur_pos.y - 1);
 
@@ -214,7 +229,12 @@ inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 1;
+		models[next_val].active = false;
+		cur_map.map[(int)next_pos.x][(int)next_pos.y] = 0;
+	}
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
