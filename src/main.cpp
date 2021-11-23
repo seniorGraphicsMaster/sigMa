@@ -58,7 +58,8 @@ static const char* beacon_bathroom = "texture/beacon_blue.png";
 static const char* img_charge = "texture/charge.jpg";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
-
+//*************************************
+static const char*	particle_path = "particle/snow-flake.png";
 //*************************************
 irrklang::ISoundEngine* engine = nullptr;
 irrklang::ISoundSource* background_src = nullptr;
@@ -156,17 +157,18 @@ GLuint		program_background = 0;	// GPU program for text render
 GLuint		program_img = 0;
 GLuint		program_shadow = 0;
 
-GLuint		shadowfbo = 0;
-GLuint		depthMap = 0;
+GLuint		PARTICLE1 = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
-bool	show_texcoord = false;
 bool	b_2d = false;
 bool	b_help = false;
 bool	pause = true;
 bool	b_game = false;
+bool	b_sound = false;
 float	t;
+float	dead_interval = 1.5f;
+float	t_game;
 float	start_t;
 
 auto	models = std::move(set_pos()); // positions of models
@@ -192,7 +194,7 @@ model_t* hero;
 //*************************************
 // holder of vertices and indices of a unit wall
 std::vector<vertex>	unit_wall_vertices;
-
+std::vector<particle_t> particles;
 //*************************************
 // scene objects
 std::vector<mesh2*>		pMesh;
@@ -711,13 +713,13 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // ���̴� ����
-		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // ���� Ȯ��
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); 
+		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); 
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
 		cam.view_matrix = mat4::look_at(models[1].center+vec3(0, -30, 140), models[1].center, vec3(0, 1, 0));
-		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar); //���̴� ����
+		cam.projection_matrix = mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar);
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position);
 	}
 
@@ -764,8 +766,11 @@ void render()
 	render_init();
 
 	// notify GL that we use our own program
-	if (b_game) {
-		
+	if (b_game && ( t - t_game > dead_interval)) {
+		if (!engine->isCurrentlyPlaying(gameover_src) && !b_sound) {
+			engine->play2D(gameover_src, false);
+			b_sound = true;
+		}
 		float dpi_scale = cg_get_dpi_scale();
 		render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
@@ -838,6 +843,8 @@ void render()
 		glBindTexture(GL_TEXTURE_2D, BEACON_bathroom);
 		glActiveTexture(GL_TEXTURE12);
 		glBindTexture(GL_TEXTURE_2D, CHARGE);
+		glActiveTexture(GL_TEXTURE13);
+		glBindTexture(GL_TEXTURE_2D, PARTICLE1);
 		i = 1;
 		for (auto& w : walls) {
 			//if (i > 1 && !b_2d) continue;
@@ -849,10 +856,22 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // ���� ����
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); 
 			i++;
 		}
-		
+		if (b_game) {
+			for (auto& p :particles) {
+				p.update();
+				
+				GLint uloc;
+				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
+				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 13);
+				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+				glUniform1i(glGetUniformLocation(program, "mode"), 2);
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			}
+		}
 		if (scene == 6) {
 			pause = false;
 			float dpi_scale = cg_get_dpi_scale();
@@ -1027,6 +1046,8 @@ bool user_init()
 
 	CHARGE = cg_create_texture(img_charge, true); if (!CHARGE) return false;
 
+	PARTICLE1 = cg_create_texture(particle_path, true); if (!PARTICLE1) return false;
+
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
@@ -1040,7 +1061,7 @@ bool user_init()
 	pMesh.emplace_back(load_model(mesh_warehouse_key));
 
 	hero = &models[1];
-
+	particles.resize(particle_t::MAX_PARTICLES);
 	if (pMesh.empty()) { printf("Unable to load mesh\n"); return false; }
 	if (!init_text()) return false;
 	if (!init_background()) return false;
@@ -1077,7 +1098,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			scene++;
 		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
-		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 5) scene++;
 			
@@ -1086,10 +1106,16 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			b_2d = !b_2d;
 			if (b_2d) {
 				if (game_over_chk(0)) { 
-					b_game = true; 
+					b_game = true;
+					t_game = float(glfwGetTime());
+					hero->active = false;
+					particles.clear();
+					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
+						particles.emplace_back(particle_t::particle_t(hero->center, t_game));
+					}
+					
 					if (engine->isCurrentlyPlaying(background_src)) {
 						engine->stopAllSounds();
-						engine->play2D(gameover_src, false);
 					}
 				}
 			}
@@ -1097,6 +1123,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_R) {
 			reset();
 			b_game = false;
+			b_sound = false;
+			hero->active = true;
 			engine->stopAllSounds();
 			engine->play2D(background_src, true);
 			//load_game_scene(scene);
