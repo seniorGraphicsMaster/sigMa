@@ -6,6 +6,7 @@
 #include "model.h"
 #include "map.h"
 #include "wall.h"
+#include "location.h"
 
 //*******************************************************************
 // forward declarations for freetype text
@@ -309,9 +310,8 @@ void load_game_scene(int scene) {
 		cur_tex = 0;
 
 		//set hero position
-		hero->center = vec3(0.0f, -7.5f, 1.0f);
-		hero->cur_pos = vec2(2, 4);
-
+		obj_3d_pos(*hero, scene, vec2(2, 4));
+		
 		//set wood position
 		models[2].center = vec3(-15.0f, -22.5f, 1.0f);
 		models[2].cur_pos = vec2(1, 3);
@@ -321,8 +321,9 @@ void load_game_scene(int scene) {
 		//set wall
 		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
 		walls[0].size = vec2(154.0f, 50.0f);
-		walls[1].center = vec3(-39.48f, 52.5f, 21.0f);
-		walls[1].size = vec2(15.0f, 40.0f);
+		obj_2d_pos(walls[1], scene, 1, 2, vec2(1, 2));
+		//walls[1].center = vec3(-39.48f, 74.98f, 21.0f);
+		//walls[1].size = vec2(15.0f, 40.0f);
 
 		//time set
 		start_t = float(glfwGetTime());
@@ -345,8 +346,7 @@ void load_game_scene(int scene) {
 		cur_tex = 1;
 
 		//set hero position
-		hero->center = vec3(-60.0f, 75.0f, 1.0f);
-		hero->cur_pos = vec2(3, 12);
+		obj_3d_pos(*hero, scene, vec2(3, 12));
 
 		//set wood position
 		models[2].center = vec3(-90.0f, -105.0f, 1.0f);
@@ -374,20 +374,19 @@ void load_game_scene(int scene) {
 		models[2].active = true;
 
 		//set camera
-		cam_xpos = 237.5f;
-		cam_xmax = 330.0f;
+		cam_xpos = 200.0f;
+		cam_xmax = 315.0f;
+
 		//set warehouse
 		models[0].id = 5;
 		cur_map = maps[2];
 		cur_tex = 2;
 
 		//set hero position
-		hero->center = vec3(22.5f, 15.0f, 1.0f);
-		hero->cur_pos = vec2(6, 3);
+		obj_3d_pos(*hero, scene, vec2(1, 7));
 
 		//set wood position
-		models[2].center = vec3(37.5f, -15.0f, 1.0f);
-		models[2].cur_pos = vec2(7, 1);
+		obj_3d_pos(models[2], scene, vec2(3, 8));
 
 		//set wall
 		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
@@ -647,7 +646,7 @@ void render()
 		glBindTexture(GL_TEXTURE_2D, DOOR);
 		i = 1;
 		for (auto& w : walls) {
-			if (i > 0 && !b_2d) continue;
+			//if (i > 1 && !b_2d) continue;
 			w.setSize();
 			GLint uloc;
 			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);

@@ -7,6 +7,7 @@ struct wall_t
 {
 	vec3	center = vec3(0);		// 2D position for translation
 	vec2	size = vec2(0);
+	float	theta = 0.0f;
 
 	mat4	model_matrix;
 
@@ -24,6 +25,8 @@ inline std::vector<wall_t> set_wall() {
 inline void wall_t::setSize()
 {
 
+	float c = cos(theta), s = sin(theta);
+
 	mat4 scale_matrix =
 	{
 		1, 0, 0, 0,
@@ -34,8 +37,8 @@ inline void wall_t::setSize()
 
 	mat4 rotation_matrix =
 	{
-		1, 0, 0, 0,
-		0, 1, 0, 0,
+		c, -s, 0, 0,
+		s, c, 0, 0,
 		0, 0, 1, 0,
 		0, 0, 0, 1
 	};
