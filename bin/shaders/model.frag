@@ -23,7 +23,7 @@ uniform sampler2D TEX;
 uniform bool use_texture;
 uniform vec4 diffuse;
 uniform int mode;
-
+uniform vec4 color;
 vec4 phong( vec3 l, vec3 n, vec3 h, vec4 Kd )
 {
 	vec4 Ira = Ka*Ia;									// ambient reflection
@@ -44,6 +44,10 @@ void main()
 	fragColor = use_texture ? texture( TEX, tc ) : diffuse;
 	if(mode==0){
 		fragColor = phong( l, n, h, fragColor );
+	}
+	else if(mode==2){
+		if(fragColor.a < 0.001) discard;
+		fragColor = vec4(fragColor.rgb,fragColor.r)*color; 
 	}
 
 	
