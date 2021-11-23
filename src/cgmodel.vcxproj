@@ -70,6 +70,8 @@
     <ClInclude Include="wall.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\bin\shaders\image.frag" />
+    <None Include="..\bin\shaders\image.vert" />
     <None Include="..\bin\shaders\model.frag" />
     <None Include="..\bin\shaders\model.vert" />
     <None Include="..\bin\shaders\skybox.frag" />

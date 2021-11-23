@@ -5,6 +5,7 @@
 #include "map.h"
 
 #define CANMOVE 0
+#define FIX -1
 #define OBJMOVEIDX 2
 #define PUSH 100
 #define PULL 200
@@ -12,10 +13,13 @@
 struct model_t
 {
 	//init var
+	int		id;
 	vec3	center=vec3(0);		// 2D position for translation
 	float	scale;
+	bool	active;
 
 	//move var
+	bool	movable;
 	vec2	cur_pos=vec2(0);
 	float	theta = 0.0f;			// rotation angle
 	float	time = 0.0f;			// check time
@@ -36,14 +40,17 @@ struct model_t
 inline std::vector<model_t> set_pos() {
 	std::vector<model_t> arr;
 	model_t m;
-	m = {vec3(0.0f,0.0f,0.0f),1.0f};//warehouse
+	m = {0, vec3(0.0f,0.0f,0.0f), 1.0f, true, false};//warehouse
 	arr.emplace_back(m);
-	m = {vec3(0.0f,-7.5f,1.0f),1.0f, vec2(2,4)};//hero
+	m = {1, vec3(0.0f,-7.5f,1.0f),1.0f, true, false, vec2(2,4)};//hero
 	arr.emplace_back(m);
-	m = { vec3(-15.0f,-22.5f,1.0f),1.0f, vec2(1,3) };//wood_box
+	m = {2, vec3(-15.0f,-22.5f,1.0f),1.0f, true, true, vec2(1,3) };//wood_box
 	arr.emplace_back(m);
-	m = { vec3(15.0f, 22.5f,1.0f),1.0f, vec2(3,6) };//wood_box
+	m = {3, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
 	arr.emplace_back(m);
+	m = {8, vec3(15.0f, 22.5f,1.0f),1.0f, false, false, vec2(3,6) };//flower
+	arr.emplace_back(m);
+	
 	return arr;
 }
 
@@ -61,10 +68,10 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (action != PUSH && next_val != CANMOVE) return;
+	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
-	if (action == PUSH && next_val > OBJMOVEIDX - 1) {
+	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x - 1, obj->cur_pos.y);
 		if (obj_next_pos.x < 0) return;
@@ -82,7 +89,7 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
 	vec2 pre_pos = vec2(cur_pos.x + 1, cur_pos.y);
 	if (pre_pos.x < cur_map.grid.x) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && pre_val > OBJMOVEIDX - 1) {
+		if (action == PULL && models[pre_val].movable) {
 			model_t* obj = &models[pre_val];
 
 			obj->cur_pos = cur_pos;
@@ -108,10 +115,10 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (action != PUSH && next_val != CANMOVE) return;
+	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
-	if (action == PUSH && next_val > OBJMOVEIDX - 1) {
+	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x + 1, obj->cur_pos.y);
 		if (obj_next_pos.x > cur_map.grid.x - 1) return;
@@ -129,7 +136,7 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 	vec2 pre_pos = vec2(cur_pos.x - 1, cur_pos.y);
 	if (pre_pos.x > -1) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && pre_val > OBJMOVEIDX - 1) {
+		if (action == PULL && models[pre_val].movable) {
 			model_t* obj = &models[pre_val];
 
 			obj->cur_pos = cur_pos;
@@ -157,10 +164,10 @@ inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (action != PUSH && next_val != CANMOVE) return;
+	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
-	if (action == PUSH && next_val > OBJMOVEIDX - 1) {
+	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x, obj->cur_pos.y + 1);
 		if (obj_next_pos.y > cur_map.grid.y - 1) return;
@@ -178,7 +185,7 @@ inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
 	vec2 pre_pos = vec2(cur_pos.x, cur_pos.y - 1);
 	if (pre_pos.y > -1) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && pre_val > OBJMOVEIDX - 1) {
+		if (action == PULL && models[pre_val].movable) {
 			model_t* obj = &models[pre_val];
 
 			obj->cur_pos = cur_pos;
@@ -205,10 +212,10 @@ inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
 
 	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (action != PUSH && next_val != CANMOVE) return;
+	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
 
 	//push
-	if (action == PUSH && next_val > OBJMOVEIDX - 1) {
+	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x, obj->cur_pos.y - 1);
 		if (obj_next_pos.y < 0) return;
@@ -226,7 +233,7 @@ inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
 	vec2 pre_pos = vec2(cur_pos.x, cur_pos.y + 1);
 	if (pre_pos.y < cur_map.grid.y) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && pre_val > OBJMOVEIDX - 1) {
+		if (action == PULL && models[pre_val].movable) {
 			model_t* obj = &models[pre_val];
 
 			obj->cur_pos = cur_pos;
@@ -248,6 +255,9 @@ inline void model_t::left_move_2d(map_t& cur_map, std::vector<model_t>& models) 
 
 	//rotation
 	theta = 0;
+
+	//wall check
+	if (next_pos.y < 0) return;
 	
 	//line check
 	for (int i = 0; i < cur_map.grid.x; i++) {
@@ -263,6 +273,8 @@ inline void model_t::right_move_2d(map_t& cur_map, std::vector<model_t>& models)
 
 	//rotation
 	theta = PI;
+
+	if (next_pos.y > cur_map.grid.y - 1) return;
 	
 	//line check
 	for (int i = 0; i < cur_map.grid.x; i++) {

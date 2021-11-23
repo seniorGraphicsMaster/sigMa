@@ -14,20 +14,31 @@ void render_text(std::string text, GLint x, GLint y, GLfloat scale, vec4 color, 
 
 //*************************************
 // global constants
-static const char*	window_name = "cgmodel - assimp for loading {obj|3ds} files";
-static const char*	vert_shader_path = "shaders/model.vert";
-static const char*	frag_shader_path = "shaders/model.frag";
+static const char*	window_name = "sigMa";
 static const char* mesh_warehouse = "mesh/Room/warehouse/warehouse.obj";
 static const char*	mesh_hero = "mesh/Hero/robotcleaner.obj";
 static const char*  wood_box = "mesh/gimmick/woodbox/woodbox.obj";
+static const char* mesh_living = "mesh/Room/living/living.obj";
+static const char* mesh_kitchen = "mesh/Room/kitchen/kitchen.obj";
+static const char* mesh_bedroom = "mesh/Room/bed/bedroom.obj";
+static const char* mesh_bathroom = "mesh/Room/bath/bathroom.obj";
+static const char* mesh_flower = "mesh/Enemy/Mflower/Mflower.obj";
 
-
+static const char* vert_shader_path = "shaders/model.vert";
+static const char* frag_shader_path = "shaders/model.frag";
 static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
 static const char* frag_background_path = "shaders/skybox.frag";
+static const char* vert_image = "shaders/image.vert";		// text vertex shaders
+static const char* frag_image = "shaders/image.frag";
 
 //*************************************
 static const char* wall_warehouse = "texture/wall_warehouse.jpg";
-static const char* object_door = "texture/door.jpg";
+static const char* wall_living = "texture/wall_living.jpg";
+static const char* wall_kitchen = "texture/wall_kitchen.jpg";
+static const char* wall_bedroom = "texture/wall_bedroom.jpg";
+static const char* wall_bathroom = "texture/wall_bathroom.jpg";
+static const char* object_door = "texture/door.png";
+static const char* img_start = "images/hero.png";
 
 //*************************************
 // common structures
@@ -60,12 +71,17 @@ struct material_t
 	vec4	specular = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	float	shininess = 2000.0f;
 };
+
 struct herostate
 {
-	float energy = 100.0f;
-	float decrease_rate = 1.0f;
-	float stopped = 0.0f;
-	float passed = 0.0f;
+	float energy;
+	float decrease_rate;
+	float stopped;
+	float passed;
+
+	herostate() { energy = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; }
+	herostate(float e, float d) { energy = e; decrease_rate = d; stopped = 0.0f; passed = 0.0f; }
+	herostate(float e, float d, float s, float p) { energy = e; decrease_rate = d, stopped = s; passed = p; }
 	
 };
 
@@ -76,27 +92,42 @@ ivec2		window_size = cg_default_window_size(); // initial window size
 
 //*************************************
 // OpenGL objects
-GLuint	program	= 0;	// ID holder for GPU program
+	
 GLuint	wall_vertex_array = 0;
 GLuint	WALL_warehouse = 0;
+GLuint	WALL_living = 0;
+GLuint	WALL_kitchen = 0;
+GLuint	WALL_bedroom = 0;
+GLuint	WALL_bathroom = 0;
 GLuint	DOOR = 1;
+GLuint	START = 0;
 
+GLuint		VAO_IMAGE;
 GLuint		VAO_BACKGROUND;			// vertex array for text objects
-GLuint		program_background;	// GPU program for text render
 
+GLuint		program = 0;		// ID holder for GPU program
+GLuint		program_background = 0;	// GPU program for text render
+GLuint		program_img = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
 bool	show_texcoord = false;
-bool	b_2d = true;
-float	t;
+bool	b_2d = false;
 bool	pause = true;
+bool	b_game = false;
+float	t;
+float	start_t;
+
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
+int		cur_tex = 0;
+GLuint	wall_tex[5];
+map_t	cur_map;
 
-std::vector<std::string> skyboxes = { "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg", "skybox/front.jpg", "skybox/back.jpg"};
+
+std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
 GLuint skyboxTexture;
 model_t* hero;
 
@@ -108,15 +139,18 @@ std::vector<vertex>	unit_wall_vertices;
 // scene objects
 std::vector<mesh2*>		pMesh;
 camera		cam;
+float		cam_xpos = 200.0f;
+float		cam_xmax = 315.0f;
 trackball	tb;
 light_t		light;
 material_t	materials;
 herostate	hero_state;
-#pragma region GAME_MANAGE
+
+
+#pragma region GAME_MANAGE  //Game over check
 
 //if the return value is 1, game over
 int game_over_chk(int type) {
-	map_t cur_map = maps[0];
 	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
 	
 	switch (type) {
@@ -138,10 +172,10 @@ int game_over_chk(int type) {
 std::string EnergyBar(float t) {
 	std::string s;
 	if (!pause) {
-		hero_state.passed = t - hero_state.stopped;
+		hero_state.passed = t - start_t - hero_state.stopped;
 	}
 	else {
-		hero_state.stopped = t - hero_state.passed;
+		hero_state.stopped = t - start_t - hero_state.passed;
 	}
 	int left = int(hero_state.energy - hero_state.passed * hero_state.decrease_rate) / 10;
 	for (int i = 0; i < 10; i++) {
@@ -157,15 +191,15 @@ std::string EnergyBar(float t) {
 std::string LeftTime(float t) {
 	std::string s;
 	if (!pause) {
-		hero_state.passed = t - hero_state.stopped;
+		hero_state.passed = t - start_t - hero_state.stopped;
 	}
 	else {
-		hero_state.stopped = t - hero_state.passed;
+		hero_state.stopped = t - start_t - hero_state.passed;
 	}
 	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
 	return s;
 }
-unsigned int loadCubemap(std::vector<std::string> faces) {
+GLuint loadCubemap(std::vector<std::string> faces) {
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
@@ -173,7 +207,7 @@ unsigned int loadCubemap(std::vector<std::string> faces) {
 	int width, height, nrChannels;
 	for (unsigned int i = 0; i < faces.size(); i++)
 	{
-		unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+		unsigned char* data = stbi_load(absolute_path(faces[i].c_str()), &width, &height, &nrChannels, 0);
 		if (data)
 		{
 			glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
@@ -195,6 +229,244 @@ unsigned int loadCubemap(std::vector<std::string> faces) {
 	return textureID;
 }
 #pragma endregion
+
+#pragma region Scenes
+
+void load_start_scene(int scene) {
+	
+	float dpi_scale = cg_get_dpi_scale();
+	
+
+	switch (scene) {
+	case 0:
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, START);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 3);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 1:
+		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		b_2d = true;
+		break;
+	case 2:
+		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 3:
+		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 4:
+		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		break;
+	case 5:
+		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		
+		break;
+	default:
+		break;
+	}
+	
+	return;
+}
+
+void set_false() {
+	int i = 0;
+	for (auto& m : models) {
+		if (i != 0 && i != 1) m.active = false;
+		i++;
+	}
+	return;
+}
+
+void load_game_scene(int scene) {
+	switch (scene) {
+	case 6:
+		//set objects
+		set_false();
+		models[2].active = true;
+		models[3].active = true;
+
+		//set camera
+		cam_xpos = 200.0f;
+		cam_xmax = 315.0f;
+		//set warehouse
+		models[0].id = 0; 
+		cur_map = maps[0];
+		cur_tex = 0;
+
+		//set hero position
+		hero->center = vec3(0.0f, -7.5f, 1.0f);
+		hero->cur_pos = vec2(2, 4);
+
+		//set wood position
+		models[2].center = vec3(-15.0f, -22.5f, 1.0f);
+		models[2].cur_pos = vec2(1, 3);
+		models[3].center = vec3(15.0f, 22.5f, 1.0f);
+		models[3].cur_pos = vec2(3, 6);
+
+		//set wall
+		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
+		walls[0].size = vec2(154.0f, 1.0f);
+		walls[1].center = vec3(-39.48f, 52.5f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate();
+		
+		break;
+	case 7:
+		//set objects
+		set_false();
+		models[2].active = true;
+		models[3].active = true;
+		models[4].active = true;
+
+		//set camera
+		cam_xpos = 275.0f;
+		cam_xmax = 400.0f;
+		//set warehouse
+		models[0].id = 4;
+		cur_map = maps[1];
+		cur_tex = 1;
+
+		//set hero position
+		hero->center = vec3(-60.0f, 75.0f, 1.0f);
+		hero->cur_pos = vec2(3, 12);
+
+		//set wood position
+		models[2].center = vec3(-90.0f, -105.0f, 1.0f);
+		models[2].cur_pos = vec2(1, 0);
+		models[3].center = vec3(-75.0f, -105.0f, 1.0f);
+		models[3].cur_pos = vec2(2, 0);
+		models[4].center = vec3(30.0f, 105.0f, 1.0f);
+		models[4].cur_pos = vec2(9, 14);
+		models[4].theta = PI / 2;
+		
+
+		//set wall
+		walls[0].center = vec3(-114.49f, 0.0f, 26.0f);
+		walls[0].size = vec2(229.0f, 1.0f);
+		walls[1].center = vec3(-114.48f, 30.0f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(120.0f, 1.0f);
+		break;
+	case 8:
+		//set objects
+		set_false();
+		models[2].active = true;
+
+		//set camera
+		cam_xpos = 237.5f;
+		cam_xmax = 330.0f;
+		//set warehouse
+		models[0].id = 5;
+		cur_map = maps[2];
+		cur_tex = 2;
+
+		//set hero position
+		hero->center = vec3(22.5f, 15.0f, 1.0f);
+		hero->cur_pos = vec2(6, 3);
+
+		//set wood position
+		models[2].center = vec3(37.5f, -15.0f, 1.0f);
+		models[2].cur_pos = vec2(7, 1);
+
+		//set wall
+		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
+		walls[0].size = vec2(79.0f, 1.0f);
+		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(80.0f, 1.0f);
+		break;
+	case 9:
+		//set objects
+		set_false();
+		models[2].active = true;
+
+		//set camera
+		cam_xpos = 237.5f;
+		cam_xmax = 330.0f;
+		//set warehouse
+		models[0].id = 6;
+		cur_map = maps[3];
+		cur_tex = 3;
+
+		//set hero position
+		hero->center = vec3(7.5f, 7.5f, 1.0f);
+		hero->cur_pos = vec2(5, 5);
+
+		//set wood position
+		models[2].center = vec3(-37.5f, -37.5f, 1.0f);
+		models[2].cur_pos = vec2(2, 2);
+
+		//set wall
+		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
+		walls[0].size = vec2(154.0f, 1.0f);
+		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
+		walls[1].size = vec2(7.5f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(100.0f, 1.0f);
+		break;
+	case 10:
+		//set objects
+		set_false();
+		models[2].active = true;
+
+		//set camera
+		cam_xpos = 237.5f;
+		cam_xmax = 330.0f;
+		//set warehouse
+		models[0].id = 7;
+		cur_map = maps[4];
+		cur_tex = 4;
+
+		//set hero position
+		hero->center = vec3(-7.5f, 0.0f, 1.0f);
+		hero->cur_pos = vec2(4, 2);
+
+		//set wood position
+		models[2].center = vec3(-52.5f, -15.0f, 1.0f);
+		models[2].cur_pos = vec2(1, 1);
+
+		//set wall
+		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
+		walls[0].size = vec2(79.0f, 1.0f);
+		walls[1].center = vec3(-76.98f, -30.0f, 21.0f);
+		walls[1].size = vec2(15.0f, 0.8f);
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(80.0f, 1.0f);
+		break;
+	default:
+		break;
+	}
+}
+#pragma endregion
+
 
 //*************************************
 // view function
@@ -222,6 +494,7 @@ std::vector<vertex> create_wall() // important
 
 	return v;
 }
+
 void update_vertex_buffer(const std::vector<vertex>& vertices)
 {
 	static GLuint vertex_buffer = 0;	// ID holder for vertex buffer
@@ -269,8 +542,8 @@ void update()
 			0, 0, 1, 0,
 			0, 0, 0, 1
 		};
-		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, 300); // 보이는 영역
-		cam.view_matrix = mat4::look_at(vec3(200.0f, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
+		cam.projection_matrix = aspect_matrix * Ortho(-30.f, 30.f, -10.0f, 40.0f, 160.5f, cam_xmax); // 보이는 영역
+		cam.view_matrix = mat4::look_at(vec3(cam_xpos, models[1].center.y, 10), vec3(0, models[1].center.y, 10), vec3( -1, 0, 1 )); // 시점 확정
 		glUniform4fv(glGetUniformLocation(program, "light_position"), 1, light.position_2d);
 	}
 	else {
@@ -299,13 +572,14 @@ void update()
 	glUniform1f(glGetUniformLocation(program, "shininess"), materials.shininess);
 }
 
-void render()
-{
+#pragma region Render
+
+void render_init() {
 	// clear screen (with background color) and clear depth buffer
-	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-	glUseProgram(program_background);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDepthMask(GL_FALSE);
 	glActiveTexture(GL_TEXTURE0);
+	glUseProgram(program_background);
 	GLint uloc1;
 	uloc1 = glGetUniformLocation(program_background, "view_matrix");			if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, cam.view_matrix);
 	uloc1 = glGetUniformLocation(program_background, "projection_matrix");	if (uloc1 > -1) glUniformMatrix4fv(uloc1, 1, GL_TRUE, mat4::perspective(cam.fovy, cam.aspect_ratio, cam.dNear, cam.dFar));
@@ -313,172 +587,297 @@ void render()
 	glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
-	// notify GL that we use our own program
-	glUseProgram( program );
-	if (scene == 0) {
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("Game Title", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please 's' to start", 50, 355, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	
-	}
 
-	if (scene == 1) {
-		float dpi_scale = cg_get_dpi_scale();
-		
-		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 2) {
-		float dpi_scale = cg_get_dpi_scale();
-
-		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 3) {
-		float dpi_scale = cg_get_dpi_scale();
-
-		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("...... ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 4) {
-		float dpi_scale = cg_get_dpi_scale();
-
-		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	if (scene == 5) {
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("This is the tutorial for our escape", 30, 300, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to start the tutorial", 30, 400, 0.4f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
-	}
-
-	int i = 0;
-	glActiveTexture(GL_TEXTURE0);
-	// bind vertex array object
-	for (auto& m : models) {
-		glBindVertexArray(pMesh[i]->vertex_array);
-		m.update(t);
-		GLint uloc;
-		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, m.model_matrix);
-		for (size_t k = 0, kn = pMesh[i]->geometry_list.size(); k < kn; k++) {
-			geometry& g = pMesh[i]->geometry_list[k];
-
-			
-			if (g.mat->textures.diffuse) {
-				glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
-				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-				glUniform1i(glGetUniformLocation(program, "mode"), 0);
-
-			}
-			else {
-				glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
-				glUniform1i(glGetUniformLocation(program, "use_texture"), false);
-				glUniform1i(glGetUniformLocation(program, "mode"), 0);
-			}
-
-			// render vertices: trigger shader programs to process vertex data
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[i]->index_buffer);
-			glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
-		}
-		i++;
-	}
-	glBindVertexArray(wall_vertex_array);
-	glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, WALL_warehouse);
-	glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
-	glBindTexture(GL_TEXTURE_2D, DOOR);
-	i = 1;
-	for (auto& w : walls) {
-		w.setSize();
-		GLint uloc;
-		uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
-		glUniform1i(glGetUniformLocation(program, "TEX"), i);
-		glUniform1i(glGetUniformLocation(program, "use_texture"), true);
-		glUniform1i(glGetUniformLocation(program, "mode"), 1);
-
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
-		i++;
-	}
-	if (scene == 6) {
-		pause = false;
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		//render_text("Left time: ", 100, 100, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-	}
-	
-	// swap front and back buffers, and display to screen
-	glfwSwapBuffers( window );
 }
 
-void reshape( GLFWwindow* window, int width, int height )
+void render()
+{
+
+	render_init();
+
+	// notify GL that we use our own program
+	if (b_game) {
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		goto skip;
+	}
+
+	// scene < 6 (game story)
+	load_start_scene(scene);
+	glUseProgram(program);
+	if (scene > 5) {
+
+		int i = 0;
+		glActiveTexture(GL_TEXTURE0);
+		// bind vertex array object
+		for (auto& m : models) {
+			if (!m.active) continue;
+			
+			glBindVertexArray(pMesh[m.id]->vertex_array);
+			m.update(t);
+			GLint uloc;
+			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, m.model_matrix);
+			for (size_t k = 0, kn = pMesh[m.id]->geometry_list.size(); k < kn; k++) {
+				geometry& g = pMesh[m.id]->geometry_list[k];
+
+
+				if (g.mat->textures.diffuse) {
+					glBindTexture(GL_TEXTURE_2D, g.mat->textures.diffuse->id);
+					glUniform1i(glGetUniformLocation(program, "TEX"), 0);	 // GL_TEXTURE0
+					glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+					glUniform1i(glGetUniformLocation(program, "mode"), 0);
+
+				}
+				else {
+					glUniform4fv(glGetUniformLocation(program, "diffuse"), 1, (const float*)(&g.mat->diffuse));
+					glUniform1i(glGetUniformLocation(program, "use_texture"), false);
+					glUniform1i(glGetUniformLocation(program, "mode"), 0);
+				}
+
+				// render vertices: trigger shader programs to process vertex data
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pMesh[m.id]->index_buffer);
+				glDrawElements(GL_TRIANGLES, g.index_count, GL_UNSIGNED_INT, (GLvoid*)(g.index_start * sizeof(GLuint)));
+			}
+			i++;
+		}
+		glBindVertexArray(wall_vertex_array);
+		glActiveTexture(GL_TEXTURE1);								// select the texture slot to bind
+		glBindTexture(GL_TEXTURE_2D, wall_tex[cur_tex]);
+		glActiveTexture(GL_TEXTURE2);								// select the texture slot to bind
+		glBindTexture(GL_TEXTURE_2D, DOOR);
+		i = 1;
+		for (auto& w : walls) {
+			if (i > 0 && !b_2d) continue;
+			w.setSize();
+			GLint uloc;
+			uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, w.model_matrix);
+			glUniform1i(glGetUniformLocation(program, "TEX"), i);
+			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+			glUniform1i(glGetUniformLocation(program, "mode"), 1);
+
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); // 변경 여지
+			i++;
+		}
+		if (scene == 6) {
+			pause = false;
+			float dpi_scale = cg_get_dpi_scale();
+			render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		
+		}
+	}
+	skip:
+	// swap front and back buffers, and display to screen
+	glfwSwapBuffers(window);
+}
+
+
+#pragma endregion
+
+#pragma region Initialize
+
+void reshape(GLFWwindow* window, int width, int height)
 {
 	// set current viewport in pixels (win_x, win_y, win_width, win_height)
 	// viewport: the window area that are affected by rendering 
-	window_size = ivec2(width,height);
-	glViewport( 0, 0, width, height );
+	window_size = ivec2(width, height);
+	glViewport(0, 0, width, height);
 }
 
 void print_help()
 {
-	printf( "[help]\n" );
-	printf( "- press ESC or 'q' to terminate the program\n" );
-	printf( "- press F1 or 'h' to see help\n" );
-	printf( "- press Home to reset camera\n" );
-	printf( "- press 'd' to toggle between OBJ format and 3DS format\n" );
-	printf( "\n" );
+	printf("[help]\n");
+	printf("- press ESC or 'q' to terminate the program\n");
+	printf("- press F1 or 'h' to see help\n");
+	printf("- press Home to reset camera\n");
+	printf("- press 'd' to toggle between OBJ format and 3DS format\n");
+	printf("\n");
 }
 
-void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
+bool init_background()
 {
-	if(action==GLFW_PRESS)
+	program_background = cg_create_program(vert_background_path, frag_background_path);
+	if (!program_background) return false;
+
+	vertex vertices[] =
+	{	//-z
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		//+y
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		//-y
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		//+z
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		//-x
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		{ vec3(-1.0f,-1.0f,-1.0f)},
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(-1.0f,1.0f,-1.0f) },
+		{ vec3(-1.0f,1.0f,1.0f)  },
+		{ vec3(-1.0f,-1.0f,1.0f) },
+		//+x
+		{ vec3(1.0f,-1.0f,-1.0f) },
+		{ vec3(1.0f,-1.0f,1.0f)  },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,1.0f)   },
+		{ vec3(1.0f,1.0f,-1.0f)  },
+		{ vec3(1.0f,-1.0f,-1.0f) },
+	};
+
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	VAO_BACKGROUND = cg_create_vertex_array(vertex_buffer); if (!VAO_BACKGROUND) { printf("%s(): VAO==nullptr\n", __func__); return false; }
+	skyboxTexture = loadCubemap(skyboxes);
+	return true;
+}
+bool init_image()
+{
+	// create corners and vertices
+	vertex corners[4];
+	corners[0].pos = vec3(-1.0f, -1.0f, 0.5f);	corners[0].tex = vec2(0.0f, 0.0f);
+	corners[1].pos = vec3(+1.0f, -1.0f, 0.5f);	corners[1].tex = vec2(1.0f, 0.0f);
+	corners[2].pos = vec3(+1.0f, +1.0f, 0.5f);	corners[2].tex = vec2(1.0f, 1.0f);
+	corners[3].pos = vec3(-1.0f, +1.0f, 0.5f);	corners[3].tex = vec2(0.0f, 1.0f);
+	vertex vertices[6] = { corners[0], corners[1], corners[2], corners[0], corners[2], corners[3] };
+
+	// generation of vertex buffer is the same, but use vertices instead of corners
+	GLuint vertex_buffer;
+	glGenBuffers(1, &vertex_buffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// generate vertex array object, which is mandatory for OpenGL 3.3 and higher
+	if (VAO_IMAGE) glDeleteVertexArrays(1, &VAO_IMAGE);
+	VAO_IMAGE = cg_create_vertex_array(vertex_buffer);
+	if (!VAO_IMAGE) { printf("%s(): failed to create vertex aray\n", __func__); return false; }
+
+	program_img = cg_create_program(vert_image, frag_image);
+	if (!program_img) return false;
+	return true;
+}
+bool user_init()
+{
+	// log hotkeys
+	print_help();
+
+	// init GL states
+	glClearColor(39 / 255.0f, 40 / 255.0f, 34 / 255.0f, 1.0f);	// set clear color
+	glEnable(GL_BLEND);
+	glEnable(GL_CULL_FACE);								// turn on backface culling
+	glEnable(GL_DEPTH_TEST);								// turn on depth tests
+	glEnable(GL_TEXTURE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glActiveTexture(GL_TEXTURE0);
+
+	unit_wall_vertices = std::move(create_wall());
+	update_vertex_buffer(unit_wall_vertices);
+	WALL_warehouse = cg_create_texture(wall_warehouse, true); if (!WALL_warehouse) return false;
+	WALL_living = cg_create_texture(wall_living, true); if (!WALL_living) return false;
+	WALL_kitchen = cg_create_texture(wall_kitchen, true); if (!WALL_kitchen) return false;
+	WALL_bedroom = cg_create_texture(wall_bedroom, true); if (!WALL_bedroom) return false;
+	WALL_bathroom = cg_create_texture(wall_bathroom, true); if (!WALL_bathroom) return false;
+	START = cg_create_texture(img_start, true); if (!START) return false;
+	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
+	
+	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
+
+	// load the mesh
+	pMesh.emplace_back(load_model(mesh_warehouse));
+	pMesh.emplace_back(load_model(mesh_hero));
+	pMesh.emplace_back(load_model(wood_box));
+	pMesh.emplace_back(load_model(wood_box));
+	pMesh.emplace_back(load_model(mesh_living));
+	pMesh.emplace_back(load_model(mesh_kitchen));
+	pMesh.emplace_back(load_model(mesh_bedroom));
+	pMesh.emplace_back(load_model(mesh_bathroom));
+	pMesh.emplace_back(load_model(mesh_flower));
+
+	hero = &models[1];
+
+	if (pMesh.empty()) { printf("Unable to load mesh\n"); return false; }
+	if (!init_text()) return false;
+	if (!init_background()) return false;
+	if (!init_image()) return false;
+	return true;
+}
+
+#pragma endregion
+
+#pragma region User_Input
+
+void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (action == GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1)	print_help();
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_T)					show_texcoord = !show_texcoord;
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
-		else if (key == GLFW_KEY_N && scene != 0 && scene < 6)					scene++;
-		else if (key == GLFW_KEY_R)
+		else if (key == GLFW_KEY_N && scene != 0 && scene < 6) {
+			scene++;
+			//if (scene == 6) load_game_scene(scene);
+			if (scene == 6) load_game_scene(6);
+		}					
+		else if (key == GLFW_KEY_F && !b_game)
 		{
 			b_2d = !b_2d;
 			if (b_2d) {
-				if (game_over_chk(0)) printf("Game Over");
+				if (game_over_chk(0)) b_game = true;
 			}
 		}
-		else if (key == GLFW_KEY_A)
+		else if (key == GLFW_KEY_R) {
+			load_game_scene(6);
+			b_game = false;
+			//load_game_scene(scene);
+		}
+		else if (key == GLFW_KEY_A && !b_game)
 		{
 			if (hero->action != PULL) hero->action = PUSH;
 		}
-		else if (key == GLFW_KEY_S)
+		else if (key == GLFW_KEY_S && !b_game)
 		{
-			if(hero->action != PUSH) hero->action = PULL;
+			if (hero->action != PUSH) hero->action = PULL;
 		}
-		else if (key == GLFW_KEY_RIGHT) {
-			if(!b_2d) hero->right_move(maps[0], models);
-			else hero->right_move_2d(maps[0], models);
+		else if (key == GLFW_KEY_RIGHT && !b_game) {
+			if (!b_2d) hero->right_move(cur_map, models);
+			else hero->right_move_2d(cur_map, models);
 		}
-		else if (key == GLFW_KEY_LEFT) {
-			if (!b_2d) hero->left_move(maps[0], models);
-			else hero->left_move_2d(maps[0], models);
+		else if (key == GLFW_KEY_LEFT && !b_game) {
+			if (!b_2d) hero->left_move(cur_map, models);
+			else hero->left_move_2d(cur_map, models);
 		}
-		else if (key == GLFW_KEY_UP) {
-			if (!b_2d) hero->up_move(maps[0], models);
+		else if (key == GLFW_KEY_UP && !b_game) {
+			if (!b_2d) hero->up_move(cur_map, models);
 		}
-		else if (key == GLFW_KEY_DOWN) {
-			if (!b_2d) hero->down_move(maps[0], models);
+		else if (key == GLFW_KEY_DOWN && !b_game) {
+			if (!b_2d) hero->down_move(cur_map, models);
 		}
 	}
 
@@ -494,115 +893,26 @@ void keyboard( GLFWwindow* window, int key, int scancode, int action, int mods )
 	}
 }
 
-void mouse( GLFWwindow* window, int button, int action, int mods )
+void mouse(GLFWwindow* window, int button, int action, int mods)
 {
-	if(button==GLFW_MOUSE_BUTTON_LEFT)
+	if (button == GLFW_MOUSE_BUTTON_LEFT)
 	{
-		dvec2 pos; glfwGetCursorPos(window,&pos.x,&pos.y);
-		vec2 npos = cursor_to_ndc( pos, window_size );
-		if(action==GLFW_PRESS)			tb.begin( cam.view_matrix, npos );
-		else if(action==GLFW_RELEASE)	tb.end();
+		dvec2 pos; glfwGetCursorPos(window, &pos.x, &pos.y);
+		vec2 npos = cursor_to_ndc(pos, window_size);
+		if (action == GLFW_PRESS)			tb.begin(cam.view_matrix, npos);
+		else if (action == GLFW_RELEASE)	tb.end();
 	}
 }
 
-void motion( GLFWwindow* window, double x, double y )
+void motion(GLFWwindow* window, double x, double y)
 {
-	if(!tb.is_tracking()) return;
-	vec2 npos = cursor_to_ndc( dvec2(x,y), window_size );
-	cam.view_matrix = tb.update( npos );
+	if (!tb.is_tracking()) return;
+	vec2 npos = cursor_to_ndc(dvec2(x, y), window_size);
+	cam.view_matrix = tb.update(npos);
 }
 
-bool init_background()
-{
-	program_background = cg_create_program(vert_background_path, frag_background_path);
-	if (!program_background) return false;
+#pragma endregion
 
-	float vertices[] = {
-	-1.0f,  1.0f, -1.0f,
-	-1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-
-	-1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f, -1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
-
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-
-	-1.0f, -1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f,
-	-1.0f, -1.0f,  1.0f,
-
-	-1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f, -1.0f,
-	 1.0f,  1.0f,  1.0f,
-	 1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f,  1.0f,
-	-1.0f,  1.0f, -1.0f,
-
-	-1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f, -1.0f,
-	 1.0f, -1.0f, -1.0f,
-	-1.0f, -1.0f,  1.0f,
-	 1.0f, -1.0f,  1.0f
-	};
-
-	GLuint vertex_buffer;
-	glGenBuffers(1, &vertex_buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertex_buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-	VAO_BACKGROUND = cg_create_vertex_array(vertex_buffer); if (!VAO_BACKGROUND) { printf("%s(): VAO==nullptr\n", __func__); return false; }
-	skyboxTexture = loadCubemap(skyboxes);
-	return true;
-}
-
-bool user_init()
-{
-	// log hotkeys
-	print_help();
-
-	// init GL states
-	glClearColor( 39/255.0f, 40/255.0f, 34/255.0f, 1.0f );	// set clear color
-	glEnable(GL_BLEND);
-	glEnable( GL_CULL_FACE );								// turn on backface culling
-	glEnable( GL_DEPTH_TEST );								// turn on depth tests
-	glEnable( GL_TEXTURE_2D );
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glActiveTexture( GL_TEXTURE0 );
-
-	unit_wall_vertices = std::move(create_wall());
-	update_vertex_buffer(unit_wall_vertices);
-	WALL_warehouse = cg_create_texture(wall_warehouse, true); if (!WALL_warehouse) return false;
-	DOOR = cg_create_texture(object_door, true); if (!DOOR) return false;
-
-	// load the mesh
-	pMesh.emplace_back(load_model(mesh_warehouse));
-	pMesh.emplace_back(load_model(mesh_hero));
-	pMesh.emplace_back(load_model(wood_box));
-	pMesh.emplace_back(load_model(wood_box));
-
-	hero = &models[1];
-
-	if(pMesh.empty()){ printf( "Unable to load mesh\n" ); return false; }
-	if (!init_text()) return false;
-	if (!init_background()) return false;
-	return true;
-}
 
 void user_finalize()
 {

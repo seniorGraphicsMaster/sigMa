@@ -5,12 +5,15 @@
 	precision highp float; // default precision needs to be defined
 #endif
 
+// input from vertex shader
+in vec2 tc;
+
+// the only output variable
 out vec4 fragColor;
 
-in vec3 tc;
+uniform sampler2D	TEX;
 
-uniform samplerCube cubemap;
-
-void main() {
-	fragColor = texture(cubemap, tc);
+void main()
+{	
+	fragColor = texture( TEX, tc );
 }
