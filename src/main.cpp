@@ -294,7 +294,6 @@ void enemy_killed(model_t& enemy) {
 					pause = true;
 					b_game = true;
 					t_game = float(glfwGetTime());
-					hero->active = false;
 					particles.clear();
 
 					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
@@ -815,6 +814,8 @@ void init_state(int level) {
 }
 
 void load_level(int level) {
+
+	restart();
 	
 	switch (level) {
 	case 1:
@@ -824,6 +825,7 @@ void load_level(int level) {
 		//load scene 6
 		scene = 6;
 		load_state(scene);
+		load_game_scene(scene);
 
 		//save cur_state == init_state
 		key_capture();
@@ -1307,36 +1309,56 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	if (action == GLFW_PRESS)
 	{
-		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
-			pause = true;
+		if (key == GLFW_KEY_ESCAPE)	glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (key == GLFW_KEY_Q) {
+			scene = 0;
+			restart();
 			in_game = false;
-			b_help = true;
+		}
+		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
+			if (scene > 5) {
+				pause = true;
+				in_game = false;
+				b_help = true;
+			}
 		}
 		else if (key == GLFW_KEY_1) {
-			difficulty = 1;
-			scene++;
-			load_level(difficulty);
+			if (scene == 5) {
+				difficulty = 1;
+				load_level(difficulty);
+			}
 		}
 		else if (key == GLFW_KEY_2) {
-			difficulty = 2;
-			scene++;
+			if (scene == 5) {
+				difficulty = 2;
+				load_level(difficulty);
+			}
 		}
 		else if (key == GLFW_KEY_3) {
-			difficulty = 3;
-			scene++;
+			if (scene == 5) {
+				difficulty = 3;
+				load_level(difficulty);
+			}
+		}
+		else if (key == GLFW_KEY_B) {
+			if (scene > 5) {
+				load_level(difficulty);
+			} 
+			
 		}
 		else if (key == GLFW_KEY_HOME)					cam = camera();
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 5) scene++;
 			
-		else if (key == GLFW_KEY_F && !b_game)
+		else if (key == GLFW_KEY_F && !b_game && in_game)
 		{
 			b_2d = !b_2d;
 		}
 		else if (key == GLFW_KEY_R) {
-			reset();
-			restart();
+			if (scene > 5) {
+				reset();
+				restart();
+			}
 		}
 		else if (key == GLFW_KEY_P) {
 			pause = !pause;
@@ -1358,7 +1380,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 					key_capture();
 				}
 			}
-			else hero->right_move_2d(cur_map, models);
+			//else hero->right_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_LEFT && !b_game && in_game) {
 			if (!b_2d) {
@@ -1391,7 +1413,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 				}
 
 			} 
-			else hero->left_move_2d(cur_map, models);
+			//else hero->left_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_UP && !b_game && in_game) {
 			if (!b_2d) {

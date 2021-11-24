@@ -358,6 +358,8 @@ inline void model_t::left_move_2d(map_t& cur_map, std::vector<model_t>& models) 
 		if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return;
 	}
 
+	cur_map.map[(int)next_pos.x][(int)next_pos.y] = 1;
+	cur_map.map[(int)cur_pos.x][(int)cur_pos.y] = 0;
 	cur_pos = next_pos;
 	center.y -= 15.0f;
 }
@@ -375,6 +377,8 @@ inline void model_t::right_move_2d(map_t& cur_map, std::vector<model_t>& models)
 		if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return;
 	}
 
+	cur_map.map[(int)next_pos.x][(int)next_pos.y] = 1;
+	cur_map.map[(int)cur_pos.x][(int)cur_pos.y] = 0;
 	cur_pos = next_pos;
 	center.y += 15.0f;
 }
