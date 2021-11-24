@@ -28,7 +28,7 @@ struct particle_t
 	particle_t(vec3 coord, float t,int type) { if(type) explode(coord,t); else splash(coord, t);}
 	void explode(vec3 coord, float t);
 	void splash(vec3 coord, float t);
-	void update();
+	void update(float t);
 };
 
 inline void particle_t::explode(vec3 coord,float t)
@@ -37,10 +37,10 @@ inline void particle_t::explode(vec3 coord,float t)
 	color = vec4(random_range(0.5f, 1.0f), random_range(0, 0.3f), random_range(0, 0.2f), 1);
 	scale = random_range(0.3f, 1.0f);
 	life = random_range(0.01f, 1.5f);
-	velocity = vec3(pos.x - coord.x, pos.y - coord.y, pos.z-coord.z) * 0.02f;
-	accel = velocity * -0.05f;
+	velocity = vec3(pos.x - coord.x, pos.y - coord.y, pos.z-coord.z) * 0.05f;
+	accel = velocity * -0.1f;
 	elapsed_time = 0.0f;
-	time_interval = random_range(40.1f, 70.2f);
+	time_interval = random_range(0.1f, 0.3f);
 	start = t;
 }
 inline void particle_t::splash(vec3 coord, float t)
@@ -50,27 +50,25 @@ inline void particle_t::splash(vec3 coord, float t)
 	scale = random_range(0.3f, 1.0f);
 	life = random_range(0.01f, 1.5f);
 	velocity = vec3(pos.x - coord.x, pos.y - coord.y, pos.z - coord.z) * 0.02f;
-	velocity.z = velocity.z * 2.0f;
-	accel = velocity * -0.05f;
-	accel.z = -0.025f;
+	velocity.z = velocity.z * 3.0f;
+	accel = vec3(0.0f);
+	accel.z = -0.06f;
 	elapsed_time = 0.0f;
-	time_interval = random_range(40.1f, 70.2f);
+	time_interval = random_range(0.1f, 0.3f);
 	start = t;
 }
 
-inline void particle_t::update()
+inline void particle_t::update(float t)
 {
-	const float dwTime = (float)glfwGetTime() - start;
-	elapsed_time += dwTime;
-	start = dwTime;
+	float dwTime = t - start;
+	elapsed_time = dwTime;
 	if (elapsed_time > time_interval)
 	{
 		velocity = velocity + accel;
 		scale = scale * 0.95f;
 		elapsed_time = 0.0f;
-		
+		start = t;
 	}
-	//printf("%f\n",dwTime);
 	pos += velocity;
 
 	constexpr float life_factor = 0.001f;

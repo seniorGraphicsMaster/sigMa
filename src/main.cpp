@@ -778,7 +778,7 @@ void render()
 		}
 		if (b_game) {
 			for (auto& p :particles) {
-				p.update();
+				p.update(t);
 				
 				GLint uloc;
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
@@ -1027,7 +1027,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 					hero->active = false;
 					particles.clear();
 					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
-						particles.emplace_back(particle_t::particle_t(hero->center, t_game,0));
+						particles.emplace_back(particle_t::particle_t(hero->center, t_game,1));
 					}
 					
 					if (engine->isCurrentlyPlaying(background_src)) {
