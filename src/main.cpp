@@ -40,7 +40,7 @@ static const char* frag_background_path = "shaders/skybox.frag";
 static const char* vert_image = "shaders/image.vert";		// text vertex shaders
 static const char* frag_image = "shaders/image.frag";
 //*************************************
-static const char* background_sound = "sounds/roki.wav";
+static const char* background_sound = "sounds/background.wav";
 static const char* gameover_sound = "sounds/gameover.mp3";
 static const char* gameend_sound = "sounds/gameend.mp3";
 //*************************************
@@ -63,7 +63,8 @@ static const char* img_charge = "texture/charge.jpg";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
 //*************************************
-static const char*	particle_path = "particle/snow-flake.png";
+static const char*	particle_explode = "particle/explode.png";
+static const char*	particle_splash = "particle/splash.png";
 //*************************************
 irrklang::ISoundEngine* engine = nullptr;
 irrklang::ISoundSource* background_src = nullptr;
@@ -169,6 +170,7 @@ GLuint		program_img = 0;
 GLuint		program_shadow = 0;
 
 GLuint		PARTICLE1 = 0;
+GLuint		PARTICLE2 = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -252,7 +254,7 @@ void game_over() {
 	hero->active = false;
 	particles.clear();
 	for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
-		particles.emplace_back(particle_t::particle_t(hero->center, t_game));
+		particles.emplace_back(particle_t::particle_t(hero->center, t_game, 0));
 	}
 
 	if (engine->isCurrentlyPlaying(background_src)) {
@@ -999,7 +1001,7 @@ void render()
 		}
 		if (b_game) {
 			for (auto& p :particles) {
-				p.update();
+				p.update(t);
 				
 				GLint uloc;
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
@@ -1183,8 +1185,8 @@ bool user_init()
 
 	CHARGE = cg_create_texture(img_charge, true); if (!CHARGE) return false;
 
-	PARTICLE1 = cg_create_texture(particle_path, true); if (!PARTICLE1) return false;
-
+	PARTICLE1 = cg_create_texture(particle_explode, true); if (!PARTICLE1) return false;
+	PARTICLE2 = cg_create_texture(particle_splash, true); if (!PARTICLE2) return false;
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
@@ -1245,13 +1247,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_F && !b_game)
 		{
 			b_2d = !b_2d;
-			/*
-			if (b_2d) {
-				if (game_over_chk()) { 
-					game_over();
-				}
-			}
-			*/
 		}
 		else if (key == GLFW_KEY_R) {
 			reset();
