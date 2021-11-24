@@ -3,6 +3,7 @@
 #define __MODEL_H__
 
 #include "map.h"
+#include "wall.h"
 
 #define CANMOVE 0
 #define FIX -1
@@ -14,13 +15,13 @@
 struct model_t
 {
 	//init var
-	int		id;
+	int		id = 0;
 	vec3	center=vec3(0);		// 2D position for translation
-	float	scale;
-	bool	active;
+	float	scale = 1.0f;
+	bool	active = false;
 
 	//move var
-	bool	movable;
+	bool	movable = false;
 	vec2	cur_pos=vec2(0);
 	float	theta = 0.0f;			// rotation angle
 	float	time = 0.0f;			// check time
@@ -30,10 +31,10 @@ struct model_t
 
 	// public functions
 	void	update(float t);
-	void	left_move(map_t& cur_map, std::vector<model_t>& models);
-	void	right_move(map_t& cur_map, std::vector<model_t>& models);
-	void	up_move(map_t& cur_map, std::vector<model_t>& models);
-	void	down_move(map_t& cur_map, std::vector<model_t>& models);
+	int	left_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys);
+	int	right_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys);
+	int	up_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys);
+	int	down_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys);
 	void	left_move_2d(map_t& cur_map, std::vector<model_t>& models);
 	void	right_move_2d(map_t& cur_map, std::vector<model_t>& models);
 };
@@ -47,11 +48,19 @@ inline std::vector<model_t> set_pos() {
 	arr.emplace_back(m);
 	m = {2, vec3(-15.0f,-22.5f,1.0f),1.0f, true, true, vec2(1,3) };//wood_box
 	arr.emplace_back(m);
-	m = {3, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
+	m = {2, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
 	arr.emplace_back(m);
-	m = {8, vec3(0),1.0f, false, false, vec2(0) };//flower
+	m = {7, vec3(0),1.0f, false, false, vec2(0) };//flower
 	arr.emplace_back(m);
-	m = {9, vec3(0),1.0f, false, false, vec2(0) };//warehouse_key
+	m = {8, vec3(0),1.0f, false, false, vec2(0) };//warehouse_key
+	arr.emplace_back(m);
+	m = {9, vec3(0),1.0f, false, false, vec2(0) };//living_key
+	arr.emplace_back(m);
+	m = {10, vec3(0),1.0f, false, false, vec2(0) };//kitchen_key
+	arr.emplace_back(m);
+	m = {11, vec3(0),1.0f, false, false, vec2(0) };//bedroom_key
+	arr.emplace_back(m);
+	m = {12, vec3(0),1.0f, false, false, vec2(0) };//bathroom_key
 	arr.emplace_back(m);
 	
 	return arr;
@@ -59,33 +68,49 @@ inline std::vector<model_t> set_pos() {
 
 
 #pragma region 3d_move
-inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
+inline int model_t::left_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys) {
 	vec2 next_pos = vec2(cur_pos.x - 1, cur_pos.y);
+	int ret = 0;
+	bool just_move = true;
 
 	//rotation
 	if (action == PULL) theta = PI / 2;
 	else theta = -PI / 2;
 
 	//wall check
-	if (next_pos.x < 0) return;
+	if (next_pos.x < 0) {
+		for (int i = 1; i < 6; i++) {
+			if (walls[i].active && walls[i].direction == 0 && next_pos.y == walls[i].wallpos) {
+				if (keys[i] == 1) return i;
+			}
+		}
+		return 0;
+	} 
 
-	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 1;
+		models[next_val].active = false;
+		ret = 6;
+	}
+	//can't move
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return 0;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x - 1, obj->cur_pos.y);
-		if (obj_next_pos.x < 0) return;
+		if (obj_next_pos.x < 0) return 0;
 
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
-		if (obj_next_val != CANMOVE) return;
+		if (obj_next_val != CANMOVE) return 0;
 
 		obj->cur_pos = obj_next_pos;
 		obj->center.x -= 15.0f;
-		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 0;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
 		cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)] = next_val;
+		just_move = false;
 	}
 
 	//pull
@@ -99,40 +124,58 @@ inline void model_t::left_move(map_t& cur_map, std::vector<model_t>& models) {
 			obj->center.x -= 15.0f;
 			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
 			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+			cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+			just_move = false;
 		}
+	}
+
+	if (just_move) {
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
 	}
 
 	cur_pos = next_pos;
 	center.x -= 15.0f;
+
+	return ret;
 }
 
-inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
+inline int model_t::right_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys) {
 	vec2 next_pos = vec2(cur_pos.x + 1, cur_pos.y);
+	int ret = 0;
+	bool just_move = true;
 
 	//rotation
 	if (action == PULL) theta = -PI / 2;
 	else theta = PI / 2;
 
 	//wall check
-	if (next_pos.x > cur_map.grid.x - 1) return;
+	if (next_pos.x > cur_map.grid.x - 1) return 0;
 
-	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 6;
+		models[next_val].active = false;
+		ret = 6;
+	}
+	//can't move
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return 0;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x + 1, obj->cur_pos.y);
-		if (obj_next_pos.x > cur_map.grid.x - 1) return;
+		if (obj_next_pos.x > cur_map.grid.x - 1) return 0;
 
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
-		if (obj_next_val != CANMOVE) return;
+		if (obj_next_val != CANMOVE) return 0;
 
 		obj->cur_pos = obj_next_pos;
 		obj->center.x += 15.0f;
-		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 0;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
 		cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)] = next_val;
+		just_move = false;
 	}
 
 	//pull
@@ -146,42 +189,58 @@ inline void model_t::right_move(map_t& cur_map, std::vector<model_t>& models) {
 			obj->center.x += 15.0f;
 			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
 			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+			cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+			just_move = false;
 		}
+	}
+
+	if (just_move) {
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
 	}
 
 	cur_pos = next_pos;
 	center.x += 15.0f;
 
+	return ret;
 }
 
-inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
-
+inline int model_t::up_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys) {
 	vec2 next_pos = vec2(cur_pos.x, cur_pos.y + 1);
+	int ret = 0;
+	bool just_move = true;
 
 	//rotation
 	if (action == PULL) theta = 0;
 	else theta = PI;
 
 	//wall check
-	if (next_pos.y > cur_map.grid.y - 1) return;
+	if (next_pos.y > cur_map.grid.y - 1) return 0;
 
-	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 6;
+		models[next_val].active = false;
+		ret = 6;
+	}
+	//can't move
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return 0;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x, obj->cur_pos.y + 1);
-		if (obj_next_pos.y > cur_map.grid.y - 1) return;
+		if (obj_next_pos.y > cur_map.grid.y - 1) return 0;
 
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
-		if (obj_next_val != CANMOVE) return;
+		if (obj_next_val != CANMOVE) return 0;
 
 		obj->cur_pos = obj_next_pos;
 		obj->center.y += 15.0f;
-		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 0;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
 		cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)] = next_val;
+		just_move = false;
 	}
 
 	//pull
@@ -195,41 +254,57 @@ inline void model_t::up_move(map_t& cur_map, std::vector<model_t>& models) {
 			obj->center.y += 15.0f;
 			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
 			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+			cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+			just_move = false;
 		}
+	}
+	
+	if (just_move) {
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
 	}
 
 	cur_pos = next_pos;
 	center.y += 15.0f;
 
+	return ret;
 }
-inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
-
+inline int model_t::down_move(map_t& cur_map, std::vector<model_t>& models, std::vector<wall_t>& walls, int* keys) {
 	vec2 next_pos = vec2(cur_pos.x, cur_pos.y - 1);
+	int ret = 0;
+	bool just_move = true;
 
 	//rotation
 	if (action == PULL) theta = PI;
 	else theta = 0;
 
 	//wall check
-	if (next_pos.y < 0) return;
+	if (next_pos.y < 0) return 0;
 
-	//can't move
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return;
+	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+		keys[next_val - 4] = 6;
+		models[next_val].active = false;
+		ret = 6;
+	}
+	//can't move
+	else if (next_val == FIX || (action != PUSH && next_val != CANMOVE)) return 0;
 
 	//push
 	if (action == PUSH && models[next_val].movable) {
 		model_t* obj = &models[next_val];
 		vec2 obj_next_pos = vec2(obj->cur_pos.x, obj->cur_pos.y - 1);
-		if (obj_next_pos.y < 0) return;
+		if (obj_next_pos.y < 0) return 0;
 
 		int obj_next_val = cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)];
-		if (obj_next_val != CANMOVE) return;
+		if (obj_next_val != CANMOVE) return 0;
 
 		obj->cur_pos = obj_next_pos;
 		obj->center.y -= 15.0f;
-		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 0;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
 		cur_map.map[int(obj_next_pos.x)][int(obj_next_pos.y)] = next_val;
+		just_move = false;
 	}
 
 	//pull
@@ -243,11 +318,19 @@ inline void model_t::down_move(map_t& cur_map, std::vector<model_t>& models) {
 			obj->center.y -= 15.0f;
 			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
 			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+			cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+			just_move = false;
 		}
 	}
-
+	if (just_move) {
+		cur_map.map[int(next_pos.x)][int(next_pos.y)] = 1;
+		cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = 0;
+	}
+	
 	cur_pos = next_pos;
 	center.y -= 15.0f;
+
+	return ret;
 }
 #pragma endregion
 

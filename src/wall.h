@@ -5,9 +5,14 @@
 
 struct wall_t
 {
+	int		id = 0;
 	vec3	center = vec3(0);		// 2D position for translation
 	vec2	size = vec2(0);
 	bool	active = false;
+	vec2	pos = vec2(0);
+	int		direction = 0;
+	int		wallpos = 0;
+
 	float	theta = 0.0f;
 	float	z_theta = 0.0f;
 
@@ -18,19 +23,29 @@ struct wall_t
 inline std::vector<wall_t> set_wall() {
 	std::vector<wall_t> arr;
 	wall_t m;
-	m = { vec3(-39.49f,0.0f,26.0f),vec2(154.0f,50.0f), true };//warehouse
+	m = {0, vec3(-39.49f,0.0f,26.0f),vec2(154.0f,50.0f), true };//warehouse
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), true };//door 1
+	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), true };//door 1
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 2
+	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 2
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 3
+	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 3
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 4
+	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 4
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 5
+	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//door 5
 	arr.emplace_back(m);
-	m = { vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//charge
+	m = {1, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon 1
+	arr.emplace_back(m);
+	m = {2, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon 2
+	arr.emplace_back(m);
+	m = {3, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon 3
+	arr.emplace_back(m);
+	m = {4, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon 4
+	arr.emplace_back(m);
+	m = {5, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon 5
+	arr.emplace_back(m);
+	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//charge
 	arr.emplace_back(m);
 	return arr;
 }
