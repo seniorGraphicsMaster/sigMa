@@ -79,7 +79,7 @@ struct camera
 	mat4	view_matrix = mat4::look_at( eye, at, up );
 		
 	float	fovy = PI/4.0f; // must be in radian
-	float	aspect_ratio;
+	float	aspect_ratio = 0.0f;
 	float	dNear = 1.0f;
 	float	dFar = 1000.0f;
 	mat4	projection_matrix;

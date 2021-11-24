@@ -14,13 +14,13 @@
 struct model_t
 {
 	//init var
-	int		id;
+	int		id = 0;
 	vec3	center=vec3(0);		// 2D position for translation
-	float	scale;
+	float	scale = 1.0f;
 	bool	active = false;
 
 	//move var
-	bool	movable;
+	bool	movable = false;
 	vec2	cur_pos=vec2(0);
 	float	theta = 0.0f;			// rotation angle
 	float	time = 0.0f;			// check time
