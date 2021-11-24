@@ -26,7 +26,9 @@ vec3 grid2pos(int scene, vec2 pos) {
 	return center;
 }
 
-void obj_3d_pos(model_t& model, int scene, vec2 pos) {
+void obj_3d_pos(model_t& model, map_t& cur_map, int scene, vec2 pos) {
+	cur_map.map[(int)pos.x][(int)pos.y] = model.index;
+	
 	model.cur_pos = pos;
 	model.center = grid2pos(scene, pos);
 }

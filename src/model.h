@@ -15,6 +15,7 @@
 struct model_t
 {
 	//init var
+	int		index = 0;
 	int		id = 0;
 	vec3	center=vec3(0);		// 2D position for translation
 	float	scale = 1.0f;
@@ -42,25 +43,25 @@ struct model_t
 inline std::vector<model_t> set_pos() {
 	std::vector<model_t> arr;
 	model_t m;
-	m = {0, vec3(0.0f,0.0f,0.0f), 1.0f, true, false};//warehouse
+	m = {0, 0, vec3(0.0f,0.0f,0.0f), 1.0f, true, false};//warehouse
 	arr.emplace_back(m);
-	m = {1, vec3(0.0f,-7.5f,1.0f),1.0f, true, false, vec2(2,4)};//hero
+	m = {1, 1, vec3(0.0f,-7.5f,1.0f),1.0f, true, false, vec2(2,4)};//hero
 	arr.emplace_back(m);
-	m = {2, vec3(-15.0f,-22.5f,1.0f),1.0f, true, true, vec2(1,3) };//wood_box
+	m = {2, 2, vec3(-15.0f,-22.5f,1.0f),1.0f, true, true, vec2(1,3) };//wood_box
 	arr.emplace_back(m);
-	m = {2, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
+	m = {3, 2, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
 	arr.emplace_back(m);
-	m = {7, vec3(0),1.0f, false, false, vec2(0) };//flower
+	m = {4, 7, vec3(0),1.0f, false, false, vec2(0) };//flower
 	arr.emplace_back(m);
-	m = {8, vec3(0),1.0f, false, false, vec2(0) };//warehouse_key
+	m = {5, 8, vec3(0),1.0f, false, false, vec2(0) };//warehouse_key
 	arr.emplace_back(m);
-	m = {9, vec3(0),1.0f, false, false, vec2(0) };//living_key
+	m = {6, 9, vec3(0),1.0f, false, false, vec2(0) };//living_key
 	arr.emplace_back(m);
-	m = {10, vec3(0),1.0f, false, false, vec2(0) };//kitchen_key
+	m = {7, 10, vec3(0),1.0f, false, false, vec2(0) };//kitchen_key
 	arr.emplace_back(m);
-	m = {11, vec3(0),1.0f, false, false, vec2(0) };//bedroom_key
+	m = {8, 11, vec3(0),1.0f, false, false, vec2(0) };//bedroom_key
 	arr.emplace_back(m);
-	m = {12, vec3(0),1.0f, false, false, vec2(0) };//bathroom_key
+	m = {9, 12, vec3(0),1.0f, false, false, vec2(0) };//bathroom_key
 	arr.emplace_back(m);
 	
 	return arr;
@@ -154,7 +155,7 @@ inline int model_t::right_move(map_t& cur_map, std::vector<model_t>& models, std
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 6;
+		keys[next_val - 4] = 1;
 		models[next_val].active = false;
 		ret = 6;
 	}
@@ -215,11 +216,18 @@ inline int model_t::up_move(map_t& cur_map, std::vector<model_t>& models, std::v
 	else theta = PI;
 
 	//wall check
-	if (next_pos.y > cur_map.grid.y - 1) return 0;
+	if (next_pos.y > cur_map.grid.y - 1) {
+		for (int i = 1; i < 6; i++) {
+			if (walls[i].active && walls[i].direction == 1 && next_pos.x == walls[i].wallpos) {
+				if (keys[i] == 1) return i;
+			}
+		}
+		return 0;
+	} 
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 6;
+		keys[next_val - 4] = 1;
 		models[next_val].active = false;
 		ret = 6;
 	}
@@ -283,7 +291,7 @@ inline int model_t::down_move(map_t& cur_map, std::vector<model_t>& models, std:
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 6;
+		keys[next_val - 4] = 1;
 		models[next_val].active = false;
 		ret = 6;
 	}
