@@ -117,15 +117,17 @@ struct herostate
 	float energy;
 	float total_time;
 	float decrease_rate;
-	float stopped;
-	float passed;
-	float save_passed;
 	float left_time;
 	float left_energy;
 
-	herostate() { energy = 50.0f; total_time = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = 100.0f; left_energy = 50.0f; }
-	herostate(float e, float t) { energy = e; total_time = t; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = t; left_energy = e; }
-	herostate(float e, float t, float d, float s, float p, float sp) { energy = e; total_time = t; decrease_rate = d, stopped = s; passed = p; save_passed = sp; left_time = t; left_energy = e; }
+	float stopped = 0.0f;
+	float passed = 0.0f;
+	float save_passed = 0.0f;
+	float total_charging = 0.0f;
+	float save_charging = 0.0f;
+
+	herostate() { energy = 50.0f; total_time = 100.0f; decrease_rate = 1.0f; left_time = 100.0f; left_energy = 50.0f; }
+	herostate(float e, float t) { energy = e; total_time = t; decrease_rate = 1.0f; left_time = t; left_energy = e;}
 	
 };
 
@@ -171,14 +173,16 @@ GLuint		PARTICLE1 = 0;
 int		frame = 0;		// index of rendering frames
 bool	b_2d = false;
 bool	b_help = false;
-bool	pause = true;
+bool	pause = false;
 bool	b_game = false;
 bool	b_sound = false;
 bool	in_game = false;
+bool	now_charge = false;
 float	t;
 float	dead_interval = 1.5f;
 float	t_game;
 float	start_t;
+float	start_charge;
 int		is_exec = 0;
 
 auto	models = std::move(set_pos()); // positions of models
@@ -186,7 +190,6 @@ auto	maps = std::move(create_grid());
 auto	walls = std::move(set_wall());
 int		scene = 0;
 int		difficulty = 0;
-int		temporary_scene = 0;
 int		cur_tex = 0;
 GLuint	wall_tex[5];
 
@@ -274,9 +277,17 @@ void door_active_chk() {
 	}
 }
 
-void charging_chk() {
+void charging() {
 	if (walls[11].active) {
-		
+		if (cur_map.map[int(walls[11].pos.x)][int(walls[11].pos.y)] == 1) {
+			if (!now_charge) {
+				start_charge = float(glfwGetTime());
+				now_charge = !now_charge;
+			} 
+			hero_state.total_charging = hero_state.save_charging + t - start_charge;
+			if (hero_state.left_energy > hero_state.energy) hero_state.left_energy = hero_state.energy;
+		}
+		else now_charge = false;
 	}
 }
 
@@ -285,7 +296,7 @@ void calcEnergy() {
 		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
 	}
 	else {
-		hero_state.stopped = t - start_t - hero_state.passed;
+		hero_state.stopped = hero_state.save_passed + t - start_t - hero_state.passed;
 	}
 	hero_state.left_energy = hero_state.energy - hero_state.passed * hero_state.decrease_rate;
 	
@@ -297,7 +308,7 @@ void calcTime(){
 		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
 	}
 	else {
-		hero_state.stopped = t - start_t - hero_state.passed;
+		hero_state.stopped = hero_state.save_passed + t - start_t - hero_state.passed;
 	}
 	hero_state.left_time = hero_state.total_time - hero_state.passed * hero_state.decrease_rate;
 }
@@ -615,6 +626,8 @@ void reset() {
 	//map loading
 	cur_map = key_state.save_map;
 
+	hero_state.stopped = 0;
+
 	//load model setting
 	models = key_state.save_model;
 	walls = key_state.save_wall;
@@ -808,6 +821,7 @@ void update()
 {
 	calcTime();
 	calcEnergy();
+	charging();
 
 	//game scene update
 	door_active_chk();
@@ -984,8 +998,7 @@ void render()
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 			}
 		}
-		if (scene > 5 && scene < 11) {
-			pause = false;
+		if (scene > 5 && scene < 11 && !b_help) {
 			float dpi_scale = cg_get_dpi_scale();
 			render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 			render_text(EnergyBar(), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
@@ -1196,9 +1209,9 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	{
 		if (key == GLFW_KEY_ESCAPE || key == GLFW_KEY_Q)	glfwSetWindowShouldClose(window, GL_TRUE);
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
+			pause = true;
+			in_game = false;
 			b_help = true;
-			temporary_scene = scene;
-			scene = -1;
 		}
 		else if (key == GLFW_KEY_1) {
 			difficulty = 1;
@@ -1231,6 +1244,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_R) {
 			reset();
 			restart();
+		}
+		else if (key == GLFW_KEY_P) {
+			pause = !pause;
+			in_game = !in_game;
 		}
 		else if (key == GLFW_KEY_A && !b_game && in_game)
 		{
@@ -1309,10 +1326,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		{
 			if (hero->action != PUSH) hero->action = 0;
 		}
-		else if (key == GLFW_KEY_F1) {
+		else if (key == GLFW_KEY_F1 || key == GLFW_KEY_H) {
+			pause = false;
+			in_game = true;
 			b_help = false;
-			b_2d = true;
-			scene = temporary_scene;
 		}
 	}
 }
