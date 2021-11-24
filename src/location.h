@@ -82,6 +82,8 @@ void obj_2d_pos(wall_t& wall, int scene, int direction, int pos, vec2 size) {
 
 	wall.size = vec2(15 * size.x, 15 * size.y);
 	wall.center = wall2pos(scene, direction, pos, wall.size.y);
+	wall.direction = direction;
+	wall.wallpos = pos;
 }
 
 void obj_floor_pos(wall_t& wall, int scene, vec2 pos) {

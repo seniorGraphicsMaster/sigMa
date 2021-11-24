@@ -10,6 +10,8 @@ struct wall_t
 	vec2	size = vec2(0);
 	bool	active = false;
 	vec2	pos = vec2(0);
+	int		direction = 0;
+	int		wallpos = 0;
 
 	float	theta = 0.0f;
 	float	z_theta = 0.0f;
