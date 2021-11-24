@@ -36,7 +36,7 @@ static const char* frag_background_path = "shaders/skybox.frag";
 static const char* vert_image = "shaders/image.vert";		// text vertex shaders
 static const char* frag_image = "shaders/image.frag";
 //*************************************
-static const char* background_sound = "sounds/roki.wav";
+static const char* background_sound = "sounds/background.wav";
 static const char* gameover_sound = "sounds/gameover.mp3";
 static const char* gameend_sound = "sounds/gameend.mp3";
 //*************************************
