@@ -254,7 +254,7 @@ void game_over() {
 	hero->active = false;
 	particles.clear();
 	for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
-		particles.emplace_back(particle_t::particle_t(hero->center, t_game, 0));
+		particles.emplace_back(particle_t::particle_t(hero->center, t_game, 1));
 	}
 
 	if (engine->isCurrentlyPlaying(background_src)) {
@@ -654,7 +654,7 @@ void init_state(int level) {
 
 	switch (level) {
 	case 1:
-		
+
 		//time set
 		start_t = float(glfwGetTime());
 		hero_state = herostate(15.0f, 50.0f);
@@ -684,17 +684,17 @@ void init_state(int level) {
 		models[5].active = true;
 
 		//set hero pos
-		obj_3d_pos(*hero, 6, vec2(2, 4));
+		obj_3d_pos(*hero, cur_map, 6, vec2(2, 4));
 
 		//set wood pos
-		obj_3d_pos(models[2], 6, vec2(1, 5));
-		obj_3d_pos(models[3], 6, vec2(1, 6));
+		obj_3d_pos(models[2], cur_map, 6, vec2(1, 5));
+		obj_3d_pos(models[3], cur_map, 6, vec2(1, 6));
 
 		//set door pos
 		obj_2d_pos(walls[1], 6, 0, 8, vec2(1, 2));
 
 		//set key pos
-		obj_3d_pos(models[5], 6, vec2(0, 0));
+		obj_3d_pos(models[5], cur_map, 6, vec2(0, 0));
 		capture(6);
 
 		//-----------state scene 7-----------------
@@ -719,20 +719,25 @@ void init_state(int level) {
 		models[2].active = true;
 		models[3].active = true;
 		models[6].active = true;
+		models[4].active = true;
 
 		//set hero pos
-		obj_3d_pos(*hero, 7, vec2(0, 1));
+		obj_3d_pos(*hero, cur_map, 7, vec2(0, 1));
 
 		//set wood pos
-		obj_3d_pos(models[2], 7, vec2(10, 3));
-		obj_3d_pos(models[3], 7, vec2(11, 4));
+		obj_3d_pos(models[2], cur_map, 7, vec2(10, 3));
+		obj_3d_pos(models[3], cur_map, 7, vec2(11, 4));
+
+		//set enemy pos
+		models[4].theta = PI / 2;
+		obj_3d_pos(models[4], cur_map, 7, vec2(9, 11));
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, vec2(1, 2));
 		obj_2d_pos(walls[2], 7, 1, 8, vec2(1, 2));
 
 		//set key pos
-		obj_3d_pos(models[6], 7, vec2(12, 7));
+		obj_3d_pos(models[6], cur_map, 7, vec2(12, 7));
 		capture(7);
 
 		break;
