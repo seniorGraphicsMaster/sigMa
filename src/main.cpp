@@ -201,6 +201,7 @@ int		keys[6];
 state	save_states[10];
 state	key_state;
 int		key_scene = 0;
+int		killed_index = 0;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
 
 std::vector<std::string> skyboxes = { "skybox/front.jpg", "skybox/back.jpg", "skybox/right.jpg", "skybox/left.jpg", "skybox/top.jpg", "skybox/bottom.jpg"};
@@ -258,11 +259,15 @@ void game_over() {
 	if (is_exec) return;
 	is_exec = 1;
 
-	b_2d = 1;
+	killed_index = 1;
+
+	b_2d = true;
+	pause = true;
 	b_game = true;
 	t_game = float(glfwGetTime());
 	hero->active = false;
 	particles.clear();
+
 	for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
 		particles.emplace_back(particle_t::particle_t(hero->center, t_game, 1));
 	}
@@ -272,10 +277,60 @@ void game_over() {
 	}
 }
 
+void enemy_killed(model_t& enemy) {
+	
+	if (b_2d) {
+		if (enemy.active) {
+			for (int i = int(cur_map.grid.x) - 1; i > -1; i--) {
+				if ((int)enemy.cur_pos.x == i) break;
+				else if (cur_map.map[i][(int)enemy.cur_pos.y] != CANMOVE) {
+					
+					if (is_exec) return;
+					killed_index = 4;
+
+					is_exec = 1;
+
+					b_2d = true;
+					pause = true;
+					b_game = true;
+					t_game = float(glfwGetTime());
+					hero->active = false;
+					particles.clear();
+
+					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
+						particles.emplace_back(particle_t::particle_t(enemy.center, t_game, 0));
+					}
+
+					if (engine->isCurrentlyPlaying(background_src)) {
+						engine->stopAllSounds();
+					}
+
+				}
+			}
+		}
+	}
+
+}
+
+void rules_level(int level) {
+	switch (level) {
+	case 1:
+		enemy_killed(models[4]);
+		break;
+	case 2:
+		break;
+	case 3:
+		break;
+	}
+	
+}
+
 void restart() {
+	b_2d = false;
 	b_game = false;
 	b_sound = false;
 	is_exec = 0;
+	pause = false;
 	hero->active = true;
 	engine->stopAllSounds();
 	engine->play2D(background_src, true);
@@ -660,19 +715,6 @@ void reset() {
 	
 }
 
-/*
-void enemy_setting(model_t enemy) {
-	for (int i = (int)enemy.cur_pos.x - 1; i < (int)enemy.cur_pos.x + 2; i++) {
-		if (i < 0 || i > (int)cur_map.grid.x - 1) continue;
-		for (int j = (int)enemy.cur_pos.y - 1; j < (int)enemy.cur_pos.y - 1; j++) {
-			if (j < 0 || j >(int)cur_map.grid.y - 1) continue;
-			if (i == (int)enemy.cur_pos.x && j == (int)enemy.cur_pos.y) continue;
-			cur_map.map[i][j] = -2;
-		}
-	}
-}
-*/
-
 void init_state(int level) {
 
 	switch (level) {
@@ -741,7 +783,6 @@ void init_state(int level) {
 		//active obj
 		models[2].active = true;
 		models[3].active = true;
-		models[6].active = true;
 		models[4].active = true;
 
 		//set hero pos
@@ -754,14 +795,14 @@ void init_state(int level) {
 		//set enemy pos
 		models[4].theta = PI / 2;
 		obj_3d_pos(models[4], cur_map, 7, vec2(8, 11));
-	//	enemy_setting(models[4]);
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, vec2(1, 2));
 		obj_2d_pos(walls[2], 7, 1, 8, vec2(1, 2));
 
 		//set key pos
-		obj_3d_pos(models[6], cur_map, 7, vec2(12, 7));
+		//obj_3d_pos(models[6], cur_map, 7, vec2(12, 7));
+
 		capture(7);
 
 		break;
@@ -868,7 +909,11 @@ void update()
 
 	//game scene update
 	door_active_chk();
+
 	if (game_over_chk()) game_over();
+	rules_level(difficulty);
+
+	
 
 	glUseProgram(program);
 
@@ -940,10 +985,22 @@ void render()
 			engine->play2D(gameover_src, false);
 			b_sound = true;
 		}
-		float dpi_scale = cg_get_dpi_scale();
-		render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
-		goto skip;
+		if (killed_index == 1) {
+			float dpi_scale = cg_get_dpi_scale();
+			render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
+			render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+			goto skip;
+		}
+		else if(killed_index == 4){
+			if (difficulty == 1) {
+				models[6].active = true;
+				models[killed_index].active = false;
+				obj_3d_pos(models[6], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
+				restart();
+			}
+			
+		}
+		
 	}
 
 	// scene < 6 (game story)
@@ -1338,7 +1395,32 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_UP && !b_game && in_game) {
 			if (!b_2d) {
-				if (hero->up_move(cur_map, models, walls, keys) == 6) {
+				int move_type = hero->up_move(cur_map, models, walls, keys);
+
+				if (move_type > 0 && move_type < 6) {
+					capture(scene);
+
+					switch (move_type) {
+					case 1: //pink
+						if (scene == 6) scene = 7;
+						else scene = 6;
+						break;
+					case 2: //black
+						printf("game clear!!!!!\n");
+						break;
+					case 3: // yellow
+						break;
+					case 4: // red
+						break;
+					case 5: // blue
+						break;
+					}
+
+					load_state(scene);
+					load_game_scene(scene);
+				}
+
+				if (move_type == 6) {
 					key_capture();
 				}
 			} 

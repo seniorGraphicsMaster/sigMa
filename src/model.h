@@ -155,7 +155,7 @@ inline int model_t::right_move(map_t& cur_map, std::vector<model_t>& models, std
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 6;
+		keys[next_val - 4] = 1;
 		models[next_val].active = false;
 		ret = 6;
 	}
@@ -216,11 +216,18 @@ inline int model_t::up_move(map_t& cur_map, std::vector<model_t>& models, std::v
 	else theta = PI;
 
 	//wall check
-	if (next_pos.y > cur_map.grid.y - 1) return 0;
+	if (next_pos.y > cur_map.grid.y - 1) {
+		for (int i = 1; i < 6; i++) {
+			if (walls[i].active && walls[i].direction == 1 && next_pos.x == walls[i].wallpos) {
+				if (keys[i] == 1) return i;
+			}
+		}
+		return 0;
+	} 
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 6;
+		keys[next_val - 4] = 1;
 		models[next_val].active = false;
 		ret = 6;
 	}
@@ -284,7 +291,7 @@ inline int model_t::down_move(map_t& cur_map, std::vector<model_t>& models, std:
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
 	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 6;
+		keys[next_val - 4] = 1;
 		models[next_val].active = false;
 		ret = 6;
 	}
