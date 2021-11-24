@@ -89,6 +89,7 @@ void obj_2d_pos(wall_t& wall, int scene, int direction, int pos, vec2 size) {
 void obj_floor_pos(wall_t& wall, int scene, vec2 pos) {
 	wall.theta = -PI / 2;
 	wall.z_theta = -PI / 2;
+	wall.pos = pos;
 
 	wall.size = vec2(15.0f, 15.0f);
 

@@ -121,11 +121,11 @@ struct herostate
 	float passed;
 	float save_passed;
 	float left_time;
-	int left_energy = 1;
+	float left_energy;
 
-	herostate() { energy = 50.0f; total_time = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = 100.0f;}
-	herostate(float e, float t) { energy = e; total_time = t; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = t;}
-	herostate(float e, float t, float d, float s, float p, float sp) { energy = e; total_time = t; decrease_rate = d, stopped = s; passed = p; save_passed = sp; left_time = t;}
+	herostate() { energy = 50.0f; total_time = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = 100.0f; left_energy = 50.0f; }
+	herostate(float e, float t) { energy = e; total_time = t; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = t; left_energy = e; }
+	herostate(float e, float t, float d, float s, float p, float sp) { energy = e; total_time = t; decrease_rate = d, stopped = s; passed = p; save_passed = sp; left_time = t; left_energy = e; }
 	
 };
 
@@ -225,7 +225,7 @@ int game_over_chk() {
 	
 	if (in_game) {
 		if (b_2d) {
-			for (int i = 0; i < cur_map.grid.x; i++) {
+			for (int i = int(cur_map.grid.x) - 1; i > -1; i--) {
 				if ((int)hero_pos.x == i) break;
 				else if (cur_map.map[i][(int)hero_pos.y] != CANMOVE) {
 					return 1;
@@ -233,7 +233,7 @@ int game_over_chk() {
 			}
 		}
 
-		if (hero_state.left_energy == 0 || hero_state.left_time < 0.0f) return 1;
+		if (hero_state.left_energy < 0.0f || hero_state.left_time < 0.0f) return 1;
 	}
 	return 0 ;
 }
@@ -274,17 +274,44 @@ void door_active_chk() {
 	}
 }
 
-std::string EnergyBar(float t) {
-	std::string s;
+void charging_chk() {
+	if (walls[11].active) {
+		
+	}
+}
+
+void calcEnergy() {
 	if (!pause) {
 		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
 	}
 	else {
 		hero_state.stopped = t - start_t - hero_state.passed;
 	}
-	hero_state.left_energy = int(hero_state.energy - hero_state.passed * hero_state.decrease_rate) / int(hero_state.energy / 10);
+	hero_state.left_energy = hero_state.energy - hero_state.passed * hero_state.decrease_rate;
+	
+	return;
+}
+
+void calcTime(){
+	if (!pause) {
+		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
+	}
+	else {
+		hero_state.stopped = t - start_t - hero_state.passed;
+	}
+	hero_state.left_time = hero_state.total_time - hero_state.passed * hero_state.decrease_rate;
+}
+
+
+std::string EnergyBar() {
+	std::string s;
+	
+	int left = int(hero_state.left_energy / (hero_state.energy / 10));
+
+	if (hero_state.left_energy < 0.0f) return "**********";
+
 	for (int i = 0; i < 10; i++) {
-		if (i <= hero_state.left_energy) {
+		if (i <= left) {
 			s += "O";
 		}
 		else {
@@ -293,17 +320,10 @@ std::string EnergyBar(float t) {
 	}
 	return s;
 }
-std::string LeftTime(float t) {
-	std::string s;
-	if (!pause) {
-		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
-	}
-	else {
-		hero_state.stopped = t - start_t - hero_state.passed;
-	}
-	hero_state.left_time = hero_state.total_time - hero_state.passed * hero_state.decrease_rate;
-	s = std::to_string(hero_state.left_time)+"s";
-	return s;
+
+std::string LeftTime() {
+	
+	return std::to_string(hero_state.left_time) + "s";
 }
 GLuint loadCubemap(std::vector<std::string> faces) {
 	GLuint textureID;
@@ -610,7 +630,7 @@ void init_state(int level) {
 		
 		//time set
 		start_t = float(glfwGetTime());
-		hero_state = herostate();
+		hero_state = herostate(15.0f, 50.0f);
 
 		//key setting
 		for (int i = 0; i < 6; i++) keys[i] = 0;
@@ -626,8 +646,7 @@ void init_state(int level) {
 		walls[11].active = true;
 
 		//set beacon
-		walls[6].pos = vec2(3, 9);
-		obj_floor_pos(walls[6], 6, walls[6].pos);
+		obj_floor_pos(walls[6], 6, vec2(3, 9));
 
 		//set charge
 		obj_floor_pos(walls[11], 6, vec2(4, 9));
@@ -663,10 +682,8 @@ void init_state(int level) {
 		walls[11].active = true;
 
 		//set beacon
-		walls[6].pos = vec2(13, 14);
-		obj_floor_pos(walls[6], 7, walls[6].pos);
-		walls[7].pos = vec2(14, 14);
-		obj_floor_pos(walls[7], 7, walls[7].pos);
+		obj_floor_pos(walls[6], 7, vec2(13, 14));
+		obj_floor_pos(walls[7], 7, vec2(14, 14));
 
 		//set charge
 		obj_floor_pos(walls[11], 7, vec2(4, 9));
@@ -789,6 +806,8 @@ void update_vertex_buffer(const std::vector<vertex>& vertices)
 //*************************************
 void update()
 {
+	calcTime();
+	calcEnergy();
 
 	//game scene update
 	door_active_chk();
@@ -969,9 +988,9 @@ void render()
 			pause = false;
 			float dpi_scale = cg_get_dpi_scale();
 			render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-			render_text(EnergyBar(t), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text(EnergyBar(), 120, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 			render_text("Left time: ", 400, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-			render_text(LeftTime(t), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+			render_text(LeftTime(), 550, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
 		
 		}
 	}
