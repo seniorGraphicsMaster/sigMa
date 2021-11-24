@@ -108,6 +108,7 @@ struct state
 	std::vector<model_t> save_model;
 	std::vector<wall_t> save_wall;
 	float save_time_passed;
+	float save_charge;
 
 };
 
@@ -278,17 +279,25 @@ void door_active_chk() {
 }
 
 void charging() {
+	
 	if (walls[11].active) {
 		if (cur_map.map[int(walls[11].pos.x)][int(walls[11].pos.y)] == 1) {
 			if (!now_charge) {
 				start_charge = float(glfwGetTime());
 				now_charge = !now_charge;
-			} 
-			hero_state.total_charging = hero_state.save_charging + t - start_charge;
-			if (hero_state.left_energy > hero_state.energy) hero_state.left_energy = hero_state.energy;
+			}
+			hero_state.total_charging = hero_state.save_charging + (t - start_charge) * 3;
+			if (hero_state.left_energy + hero_state.total_charging > hero_state.energy) hero_state.total_charging = hero_state.energy - hero_state.left_energy;
+			
 		}
-		else now_charge = false;
+		else {
+			hero_state.save_charging = hero_state.total_charging;
+			now_charge = false;
+		} 
 	}
+	else now_charge = false;
+
+	hero_state.left_energy += hero_state.total_charging;
 }
 
 void calcEnergy() {
@@ -612,6 +621,7 @@ void key_capture() {
 	key_state.save_map = cur_map;
 
 	hero_state.save_passed = hero_state.passed;
+	key_state.save_charge = hero_state.save_charging;
 	start_t = float(glfwGetTime());
 
 	key_state.save_model = models;
@@ -627,6 +637,8 @@ void reset() {
 	cur_map = key_state.save_map;
 
 	hero_state.stopped = 0;
+	hero_state.save_charging = key_state.save_charge;
+	hero_state.total_charging = hero_state.save_charging;
 
 	//load model setting
 	models = key_state.save_model;
