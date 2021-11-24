@@ -105,9 +105,9 @@ struct state
 {
 	int	  scene;
 	map_t save_map;
-	int key_set[6];
 	std::vector<model_t> save_model;
 	std::vector<wall_t> save_wall;
+	float save_time_passed;
 
 };
 
@@ -115,13 +115,17 @@ struct state
 struct herostate
 {
 	float energy;
+	float total_time;
 	float decrease_rate;
 	float stopped;
 	float passed;
+	float save_passed;
+	float left_time;
+	int left_energy = 1;
 
-	herostate() { energy = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; }
-	herostate(float e, float d) { energy = e; decrease_rate = d; stopped = 0.0f; passed = 0.0f; }
-	herostate(float e, float d, float s, float p) { energy = e; decrease_rate = d, stopped = s; passed = p; }
+	herostate() { energy = 50.0f; total_time = 100.0f; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = 100.0f;}
+	herostate(float e, float t) { energy = e; total_time = t; decrease_rate = 1.0f; stopped = 0.0f; passed = 0.0f; save_passed = 0.0f; left_time = t;}
+	herostate(float e, float t, float d, float s, float p, float sp) { energy = e; total_time = t; decrease_rate = d, stopped = s; passed = p; save_passed = sp; left_time = t;}
 	
 };
 
@@ -170,10 +174,12 @@ bool	b_help = false;
 bool	pause = true;
 bool	b_game = false;
 bool	b_sound = false;
+bool	in_game = false;
 float	t;
 float	dead_interval = 1.5f;
 float	t_game;
 float	start_t;
+int		is_exec = 0;
 
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
@@ -214,24 +220,49 @@ herostate	hero_state;
 #pragma region GAME_MANAGE  //Game over check
 
 //if the return value is 1, game over
-int game_over_chk(int type) {
+int game_over_chk() {
 	vec2 hero_pos = vec2(hero->cur_pos.x, hero->cur_pos.y);
 	
-	switch (type) {
-	case 0:
-
-		for (int i = 0; i < cur_map.grid.x; i++) {
-			if ((int)hero_pos.x == i) break;
-			else if(cur_map.map[i][(int)hero_pos.y] != CANMOVE){
-				return 1;
+	if (in_game) {
+		if (b_2d) {
+			for (int i = 0; i < cur_map.grid.x; i++) {
+				if ((int)hero_pos.x == i) break;
+				else if (cur_map.map[i][(int)hero_pos.y] != CANMOVE) {
+					return 1;
+				}
 			}
 		}
-		break;
-	
-	default: break;
+
+		if (hero_state.left_energy == 0 || hero_state.left_time < 0.0f) return 1;
+	}
+	return 0 ;
+}
+
+void game_over() {
+	if (is_exec) return;
+	is_exec = 1;
+
+	b_2d = 1;
+	b_game = true;
+	t_game = float(glfwGetTime());
+	hero->active = false;
+	particles.clear();
+	for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
+		particles.emplace_back(particle_t::particle_t(hero->center, t_game));
 	}
 
-	return 0 ;
+	if (engine->isCurrentlyPlaying(background_src)) {
+		engine->stopAllSounds();
+	}
+}
+
+void restart() {
+	b_game = false;
+	b_sound = false;
+	is_exec = 0;
+	hero->active = true;
+	engine->stopAllSounds();
+	engine->play2D(background_src, true);
 }
 
 void door_active_chk() {
@@ -246,14 +277,14 @@ void door_active_chk() {
 std::string EnergyBar(float t) {
 	std::string s;
 	if (!pause) {
-		hero_state.passed = t - start_t - hero_state.stopped;
+		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
 	}
 	else {
 		hero_state.stopped = t - start_t - hero_state.passed;
 	}
-	int left = int(hero_state.energy - hero_state.passed * hero_state.decrease_rate) / 10;
+	hero_state.left_energy = int(hero_state.energy - hero_state.passed * hero_state.decrease_rate) / int(hero_state.energy / 10);
 	for (int i = 0; i < 10; i++) {
-		if (i <= left) {
+		if (i <= hero_state.left_energy) {
 			s += "O";
 		}
 		else {
@@ -265,12 +296,13 @@ std::string EnergyBar(float t) {
 std::string LeftTime(float t) {
 	std::string s;
 	if (!pause) {
-		hero_state.passed = t - start_t - hero_state.stopped;
+		hero_state.passed = hero_state.save_passed + t - start_t - hero_state.stopped;
 	}
 	else {
 		hero_state.stopped = t - start_t - hero_state.passed;
 	}
-	s = std::to_string(hero_state.energy - hero_state.passed * hero_state.decrease_rate)+"s";
+	hero_state.left_time = hero_state.total_time - hero_state.passed * hero_state.decrease_rate;
+	s = std::to_string(hero_state.left_time)+"s";
 	return s;
 }
 GLuint loadCubemap(std::vector<std::string> faces) {
@@ -523,25 +555,17 @@ void load_game_scene(int scene) {
 
 void capture(int scene) {
 	save_states[scene].save_map = cur_map;
-	
-	/*
-	for (int i = 0; i < 6; i++) {
-		save_states[scene].key_set[i] = keys[i];
-	}
-	*/
 
 	save_states[scene].save_model = models;
 	save_states[scene].save_wall = walls;
 }
 
 void load_state(int load_scene) {
-	/*
-	//load key setting
-	for (int i = 0; i < 6; i++) keys[i] = save_states[load_scene].key_set[i];
-	*/
 
+	/*
 	//set all object false
 	set_false();
+	*/
 
 	//map loading
 	cur_map = save_states[load_scene].save_map;
@@ -556,11 +580,8 @@ void key_capture() {
 
 	key_state.save_map = cur_map;
 
-	/*
-	for (int i = 0; i < 6; i++) {
-		key_state.key_set[i] = keys[i];
-	}
-	*/
+	hero_state.save_passed = hero_state.passed;
+	start_t = float(glfwGetTime());
 
 	key_state.save_model = models;
 	key_state.save_wall = walls;
@@ -569,12 +590,7 @@ void key_capture() {
 void reset() {
 	//change key_scene
 	scene = key_scene;
-	load_game_scene(key_scene);
-	
-	/*
-	//load key setting
-	for (int i = 0; i < 6; i++) keys[i] = key_state.key_set[i];
-	*/
+	start_t = float(glfwGetTime());
 
 	//map loading
 	cur_map = key_state.save_map;
@@ -582,6 +598,9 @@ void reset() {
 	//load model setting
 	models = key_state.save_model;
 	walls = key_state.save_wall;
+
+	load_game_scene(key_scene);
+	
 }
 
 void init_state(int level) {
@@ -695,6 +714,8 @@ void load_level(int level) {
 		//save cur_state == init_state
 		key_capture();
 
+		in_game = true;
+
 		break;
 	case 2:
 		break;
@@ -768,6 +789,11 @@ void update_vertex_buffer(const std::vector<vertex>& vertices)
 //*************************************
 void update()
 {
+
+	//game scene update
+	door_active_chk();
+	if (game_over_chk()) game_over();
+
 	glUseProgram(program);
 
 	// update projection matrix
@@ -939,7 +965,7 @@ void render()
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 			}
 		}
-		if (scene == 6) {
+		if (scene > 5 && scene < 11) {
 			pause = false;
 			float dpi_scale = cg_get_dpi_scale();
 			render_text("Energy: ", 20, 30, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
@@ -1175,44 +1201,29 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_F && !b_game)
 		{
 			b_2d = !b_2d;
+			/*
 			if (b_2d) {
-				if (game_over_chk(0)) { 
-					b_game = true;
-					t_game = float(glfwGetTime());
-					hero->active = false;
-					particles.clear();
-					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
-						particles.emplace_back(particle_t::particle_t(hero->center, t_game));
-					}
-					
-					if (engine->isCurrentlyPlaying(background_src)) {
-						engine->stopAllSounds();
-					}
+				if (game_over_chk()) { 
+					game_over();
 				}
 			}
+			*/
 		}
 		else if (key == GLFW_KEY_R) {
 			reset();
-			b_game = false;
-			b_sound = false;
-			hero->active = true;
-			engine->stopAllSounds();
-			engine->play2D(background_src, true);
-			//load_game_scene(scene);
+			restart();
 		}
-		else if (key == GLFW_KEY_A && !b_game)
+		else if (key == GLFW_KEY_A && !b_game && in_game)
 		{
 			if (hero->action != PULL) hero->action = PUSH;
 		}
-		else if (key == GLFW_KEY_S && !b_game)
+		else if (key == GLFW_KEY_S && !b_game && in_game)
 		{
 			if (hero->action != PUSH) hero->action = PULL;
 		}
-		else if (key == GLFW_KEY_RIGHT && !b_game) {
+		else if (key == GLFW_KEY_RIGHT && !b_game && in_game) {
 			if (!b_2d) {
 				int move_type = hero->right_move(cur_map, models, walls, keys);
-
-				door_active_chk();
 				
 				if (move_type == 6) {
 					key_capture();
@@ -1220,27 +1231,25 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			}
 			else hero->right_move_2d(cur_map, models);
 		}
-		else if (key == GLFW_KEY_LEFT && !b_game) {
+		else if (key == GLFW_KEY_LEFT && !b_game && in_game) {
 			if (!b_2d) {
 				int move_type = hero->left_move(cur_map, models, walls, keys);
-
-				door_active_chk();
 
 				if (move_type > 0 && move_type < 6) {
 					capture(scene);
 
 					switch (move_type) {
-					case 1:
+					case 1: //pink
 						if (scene == 6) scene = 7;
 						else scene = 6;
 						break;
-					case 2:
+					case 2: //black
 						break;
-					case 3:
+					case 3: // yellow
 						break;
-					case 4:
+					case 4: // red
 						break;
-					case 5:
+					case 5: // blue
 						break;
 					}
 
@@ -1255,20 +1264,18 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			} 
 			else hero->left_move_2d(cur_map, models);
 		}
-		else if (key == GLFW_KEY_UP && !b_game) {
+		else if (key == GLFW_KEY_UP && !b_game && in_game) {
 			if (!b_2d) {
 				if (hero->up_move(cur_map, models, walls, keys) == 6) {
 					key_capture();
 				}
-				door_active_chk();
 			} 
 		}
-		else if (key == GLFW_KEY_DOWN && !b_game) {
+		else if (key == GLFW_KEY_DOWN && !b_game && in_game) {
 			if (!b_2d) {
 				if (hero->down_move(cur_map, models, walls, keys) == 6) {
 					key_capture();
 				}
-				door_active_chk();
 			} 
 		}
 		
