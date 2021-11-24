@@ -239,6 +239,16 @@ int game_over_chk() {
 			}
 		}
 
+		for (int i = (int)hero->cur_pos.x - 1; i < (int)hero->cur_pos.x + 2; i++) {
+			
+			if (i < 0 || i >(int)cur_map.grid.x - 1) continue;
+			for (int j = (int)hero->cur_pos.y - 1; j < (int)hero->cur_pos.y + 2; j++) {
+				if (j < 0 || j >(int)cur_map.grid.y - 1) continue;
+				
+				if (cur_map.map[i][j] == 4) return 1;
+			}
+		}
+
 		if (hero_state.left_energy < 0.0f || hero_state.left_time < 0.0f) return 1;
 	}
 	return 0 ;
@@ -650,6 +660,19 @@ void reset() {
 	
 }
 
+/*
+void enemy_setting(model_t enemy) {
+	for (int i = (int)enemy.cur_pos.x - 1; i < (int)enemy.cur_pos.x + 2; i++) {
+		if (i < 0 || i > (int)cur_map.grid.x - 1) continue;
+		for (int j = (int)enemy.cur_pos.y - 1; j < (int)enemy.cur_pos.y - 1; j++) {
+			if (j < 0 || j >(int)cur_map.grid.y - 1) continue;
+			if (i == (int)enemy.cur_pos.x && j == (int)enemy.cur_pos.y) continue;
+			cur_map.map[i][j] = -2;
+		}
+	}
+}
+*/
+
 void init_state(int level) {
 
 	switch (level) {
@@ -657,7 +680,7 @@ void init_state(int level) {
 
 		//time set
 		start_t = float(glfwGetTime());
-		hero_state = herostate(15.0f, 50.0f);
+		hero_state = herostate(25.0f, 60.0f);
 
 		//key setting
 		for (int i = 0; i < 6; i++) keys[i] = 0;
@@ -709,8 +732,8 @@ void init_state(int level) {
 		walls[11].active = true;
 
 		//set beacon
-		obj_floor_pos(walls[6], 7, vec2(13, 14));
-		obj_floor_pos(walls[7], 7, vec2(14, 14));
+		obj_floor_pos(walls[6], 7, vec2(6, 2));
+		obj_floor_pos(walls[7], 7, vec2(1, 13));
 
 		//set charge
 		obj_floor_pos(walls[11], 7, vec2(4, 9));
@@ -725,12 +748,13 @@ void init_state(int level) {
 		obj_3d_pos(*hero, cur_map, 7, vec2(0, 1));
 
 		//set wood pos
-		obj_3d_pos(models[2], cur_map, 7, vec2(10, 3));
+		obj_3d_pos(models[2], cur_map, 7, vec2(5, 10));
 		obj_3d_pos(models[3], cur_map, 7, vec2(11, 4));
 
 		//set enemy pos
 		models[4].theta = PI / 2;
-		obj_3d_pos(models[4], cur_map, 7, vec2(9, 11));
+		obj_3d_pos(models[4], cur_map, 7, vec2(8, 11));
+	//	enemy_setting(models[4]);
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, vec2(1, 2));
