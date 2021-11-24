@@ -9,6 +9,7 @@
 #define OBJMOVEIDX 2
 #define PUSH 100
 #define PULL 200
+#define TIME_INTERVAL 0.5f
 
 struct model_t
 {

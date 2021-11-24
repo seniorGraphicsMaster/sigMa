@@ -9,11 +9,12 @@ inline float random_range( float min, float max ){ return mix( min, max, rand()/
 
 struct particle_t
 {
-	static constexpr int MAX_PARTICLES = 200;
+	static constexpr int MAX_PARTICLES = 300;
 
 	vec3 pos;
 	vec4 color;
 	vec3 velocity;
+	vec3 accel;
 	float scale;
 	float life;
 	float start=0;
@@ -23,44 +24,37 @@ struct particle_t
 
 	mat4 model_matrix;
 
-	particle_t() { reset(); }
-	particle_t(vec3 coord, float t) { explode(coord,t); }
-	void reset();
-	void reset(float t);
+	particle_t() {  }
+	particle_t(vec3 coord, float t,int type) { if(type) explode(coord,t); else splash(coord, t);}
 	void explode(vec3 coord, float t);
+	void splash(vec3 coord, float t);
 	void update();
 };
-inline void particle_t::reset()
-{
-	pos = vec3(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f));
-	color = vec4(random_range(0, 1.0f), random_range(0, 1.0f), random_range(0, 1.0f), 1);
-	scale = random_range(0.005f, 0.08f);
-	life = random_range(0.01f, 1.0f);
-	velocity = vec3(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f)) * 0.003f;
-	elapsed_time = 0.0f;
-	time_interval = random_range(200.0f, 600.0f);
-}
-inline void particle_t::reset(float t)
-{
-	pos = vec3(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f));
-	color = vec4(random_range(0.5f, 1.0f), random_range(0, 1.0f), random_range(0, 1.0f), 1);
-	scale = random_range(0.005f, 0.08f);
-	life = random_range(0.01f, 1.0f);
-	velocity = vec3(random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f), random_range(-1.0f, 1.0f)) * 0.003f;
-	elapsed_time = 0.0f;
-	time_interval = random_range(200.0f, 600.0f);
-	start = t;
-}
 
 inline void particle_t::explode(vec3 coord,float t)
 {
-	pos = vec3(random_range(coord.x - 5.0f, coord.x + 5.0f), random_range(coord.y - 5.0f, coord.y + 5.0f), random_range(coord.z - 5.0f, coord.z + 5.0f));
-	color = vec4(random_range(0.5f, 1.0f), random_range(0, 0.2f), random_range(0, 0.2f), 1);
-	scale = random_range(0.3f, 3.0f);
+	pos = vec3(random_range(coord.x - 4.0f, coord.x + 4.0f), random_range(coord.y - 4.0f, coord.y + 4.0f), random_range(coord.z - 4.0f, coord.z + 4.0f));
+	color = vec4(random_range(0.5f, 1.0f), random_range(0, 0.3f), random_range(0, 0.2f), 1);
+	scale = random_range(0.3f, 1.0f);
 	life = random_range(0.01f, 1.5f);
-	velocity = vec3(pos.x - coord.x, pos.y - coord.y, pos.z-coord.z) * 0.03f;
+	velocity = vec3(pos.x - coord.x, pos.y - coord.y, pos.z-coord.z) * 0.02f;
+	accel = velocity * -0.05f;
 	elapsed_time = 0.0f;
-	time_interval = random_range(200.0f, 600.0f);
+	time_interval = random_range(40.1f, 70.2f);
+	start = t;
+}
+inline void particle_t::splash(vec3 coord, float t)
+{
+	pos = vec3(random_range(coord.x - 4.0f, coord.x + 4.0f), random_range(coord.y - 4.0f, coord.y + 4.0f), random_range(coord.z, coord.z + 5.0f));
+	color = vec4(random_range(0.0f, 0.2f), random_range(0.5f, 1.0f), random_range(0, 0.4f), 1);
+	scale = random_range(0.3f, 1.0f);
+	life = random_range(0.01f, 1.5f);
+	velocity = vec3(pos.x - coord.x, pos.y - coord.y, pos.z - coord.z) * 0.02f;
+	velocity.z = velocity.z * 2.0f;
+	accel = velocity * -0.05f;
+	accel.z = -0.025f;
+	elapsed_time = 0.0f;
+	time_interval = random_range(40.1f, 70.2f);
 	start = t;
 }
 
@@ -68,17 +62,15 @@ inline void particle_t::update()
 {
 	const float dwTime = (float)glfwGetTime() - start;
 	elapsed_time += dwTime;
-
+	start = dwTime;
 	if (elapsed_time > time_interval)
 	{
-		//const float theta = random_range(0, 1.0f) * PI * 2.0f;
-		constexpr float velocity_factor = 0.3f;
-		//velocity = vec2(cos(theta), sin(theta)) * velocity_factor;
-		velocity = velocity * velocity_factor;
+		velocity = velocity + accel;
 		scale = scale * 0.95f;
 		elapsed_time = 0.0f;
+		
 	}
-
+	//printf("%f\n",dwTime);
 	pos += velocity;
 
 	constexpr float life_factor = 0.001f;

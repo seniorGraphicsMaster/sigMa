@@ -58,7 +58,8 @@ static const char* beacon_bathroom = "texture/beacon_blue.png";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
 //*************************************
-static const char*	particle_path = "particle/snow-flake.png";
+static const char*	particle_explode = "particle/explode.png";
+static const char*	particle_splash = "particle/splash.png";
 //*************************************
 irrklang::ISoundEngine* engine = nullptr;
 irrklang::ISoundSource* background_src = nullptr;
@@ -147,6 +148,7 @@ GLuint		program_img = 0;
 GLuint		program_shadow = 0;
 
 GLuint		PARTICLE1 = 0;
+GLuint		PARTICLE2 = 0;
 //*************************************
 // global variables
 int		frame = 0;		// index of rendering frames
@@ -960,8 +962,8 @@ bool user_init()
 	BEACON_bathroom = cg_create_texture(beacon_bathroom, true); if (!BEACON_bathroom) return false;
 	beacon_tex[0] = BEACON_warehouse; beacon_tex[1] = BEACON_living; beacon_tex[2] = BEACON_kitchen; beacon_tex[3] = BEACON_bedroom; beacon_tex[4] = BEACON_bathroom;
 
-	PARTICLE1 = cg_create_texture(particle_path, true); if (!PARTICLE1) return false;
-
+	PARTICLE1 = cg_create_texture(particle_explode, true); if (!PARTICLE1) return false;
+	PARTICLE2 = cg_create_texture(particle_splash, true); if (!PARTICLE2) return false;
 	// load the mesh
 	pMesh.emplace_back(load_model(mesh_warehouse));
 	pMesh.emplace_back(load_model(mesh_hero));
@@ -1025,7 +1027,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 					hero->active = false;
 					particles.clear();
 					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
-						particles.emplace_back(particle_t::particle_t(hero->center, t_game));
+						particles.emplace_back(particle_t::particle_t(hero->center, t_game,0));
 					}
 					
 					if (engine->isCurrentlyPlaying(background_src)) {
