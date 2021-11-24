@@ -568,6 +568,7 @@ void key_capture() {
 
 void reset() {
 	//change key_scene
+	scene = key_scene;
 	load_game_scene(key_scene);
 	
 	/*
