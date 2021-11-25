@@ -178,12 +178,14 @@ bool	b_2d = false;
 bool	b_help = false;
 bool	pause = false;
 bool	b_game = false;
+bool	b_kill = false;
 bool	b_sound = false;
 bool	in_game = false;
 bool	now_charge = false;
 float	t;
 float	dead_interval = 1.5f;
 float	t_game;
+float	t_kill;
 float	start_t;
 float	start_charge;
 int		is_exec = 0;
@@ -278,7 +280,6 @@ void game_over() {
 }
 
 void enemy_killed(model_t& enemy) {
-	
 	if (b_2d) {
 		if (enemy.active) {
 			for (int i = int(cur_map.grid.x) - 1; i > -1; i--) {
@@ -287,21 +288,20 @@ void enemy_killed(model_t& enemy) {
 					
 					if (is_exec) return;
 					killed_index = 4;
+					b_kill = true;
+					//is_exec = 1;
+					enemy.active = false;
 
-					is_exec = 1;
-
-					b_2d = true;
-					pause = true;
-					b_game = true;
-					t_game = float(glfwGetTime());
+					t_kill = float(glfwGetTime());
 					particles.clear();
 
 					for (int p = 0; p < particle_t::MAX_PARTICLES; p++) {
-						particles.emplace_back(particle_t::particle_t(enemy.center, t_game, 0));
+						particles.emplace_back(particle_t::particle_t(enemy.center, t_kill, 0));
 					}
-
-					if (engine->isCurrentlyPlaying(background_src)) {
-						engine->stopAllSounds();
+		
+					if (difficulty == 1) {
+						models[6].active = true;
+						obj_3d_pos(models[6], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
 					}
 
 				}
@@ -993,15 +993,7 @@ void render()
 			render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 			goto skip;
 		}
-		else if(killed_index == 4){
-			if (difficulty == 1) {
-				models[6].active = true;
-				models[killed_index].active = false;
-				obj_3d_pos(models[6], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
-				restart();
-			}
-			
-		}
+		
 		
 	}
 
@@ -1073,6 +1065,8 @@ void render()
 		glBindTexture(GL_TEXTURE_2D, CHARGE);
 		glActiveTexture(GL_TEXTURE13);
 		glBindTexture(GL_TEXTURE_2D, PARTICLE1);
+		glActiveTexture(GL_TEXTURE14);
+		glBindTexture(GL_TEXTURE_2D, PARTICLE2);
 		i = 1;
 		for (auto& w : walls) {
 			//if (i > 1 && !b_2d) continue;
@@ -1095,6 +1089,19 @@ void render()
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
 				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
 				glUniform1i(glGetUniformLocation(program, "TEX"), 13);
+				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
+				glUniform1i(glGetUniformLocation(program, "mode"), 2);
+				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+			}
+		}
+		if (b_kill&& (t - t_kill < dead_interval)) {
+			for (auto& p : particles) {
+				p.update(t);
+
+				GLint uloc;
+				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
+				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 14);
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 				glUniform1i(glGetUniformLocation(program, "mode"), 2);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -1380,7 +1387,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 					key_capture();
 				}
 			}
-			//else hero->right_move_2d(cur_map, models);
+			else hero->right_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_LEFT && !b_game && in_game) {
 			if (!b_2d) {
@@ -1413,7 +1420,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 				}
 
 			} 
-			//else hero->left_move_2d(cur_map, models);
+			else hero->left_move_2d(cur_map, models);
 		}
 		else if (key == GLFW_KEY_UP && !b_game && in_game) {
 			if (!b_2d) {
