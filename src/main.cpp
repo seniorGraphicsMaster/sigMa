@@ -113,6 +113,11 @@ struct state
 
 };
 
+struct enemy_state
+{
+	float search_interval = 2.0f;
+	float latest_search = 0.0f;
+};
 
 struct herostate
 {
@@ -224,6 +229,7 @@ trackball	tb;
 light_t		light;
 material_t	materials;
 herostate	hero_state;
+enemy_state flower;
 
 
 #pragma region GAME_MANAGE  //Game over check
@@ -309,6 +315,27 @@ void enemy_killed(model_t& enemy) {
 		}
 	}
 
+}
+
+
+void enemy_search(model_t& enemy) {
+	if (enemy.active) {
+		if (t - flower.latest_search > flower.search_interval) {
+			if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 3.0f) { // left
+				printf("left\n");
+			}
+			else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -3.0f) { //right
+				printf("right\n");
+			}
+			if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -3.0f) { // up
+				printf("up\n");
+			}
+			else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 3.0f) { // down
+				printf("down\n");
+			}
+			flower.latest_search = t;
+		}
+	}
 }
 
 void rules_level(int level) {
@@ -911,10 +938,10 @@ void update()
 
 	//game scene update
 	door_active_chk();
-
+	
 	if (game_over_chk()) game_over();
 	rules_level(difficulty);
-
+	enemy_search(models[4]);
 	
 
 	glUseProgram(program);
