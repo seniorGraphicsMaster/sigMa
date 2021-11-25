@@ -61,6 +61,11 @@ static const char* beacon_kitchen = "texture/beacon_yellow.png";
 static const char* beacon_bedroom = "texture/beacon_red.png";
 static const char* beacon_bathroom = "texture/beacon_blue.png";
 static const char* img_key_warehouse = "texture/key.png";
+static const char* img_key_living = "texture/key_black.png";
+static const char* img_key_kitchen = "texture/key_yellow.png";
+static const char* img_key_bedroom = "texture/key_red.png";
+static const char* img_key_bathroom = "texture/key_blue.png";
+static const char* img_checking = "texture/checking.png";
 static const char* img_charge = "texture/charge.jpg";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
@@ -165,7 +170,12 @@ GLuint	BEACON_kitchen = 0;
 GLuint	BEACON_bedroom = 0;
 GLuint	BEACON_bathroom = 0;
 GLuint	KEY_warehouse = 0;
+GLuint	KEY_living = 0;
+GLuint	KEY_kitchen = 0;
+GLuint	KEY_bedroom = 0;
+GLuint	KEY_bathroom = 0;
 GLuint  CHARGE = 0;
+GLuint	CHECKING = 0;
 GLuint	START = 0;
 GLuint	HELP = 0;
 
@@ -331,6 +341,7 @@ void enemy_killed(model_t& enemy) {
 					b_kill = true;
 					//is_exec = 1;
 					enemy.active = false;
+					cur_map.map[(int)enemy.cur_pos.x][(int)enemy.cur_pos.y] = 0;
 
 					t_kill = float(glfwGetTime());
 					particles.clear();
@@ -373,6 +384,30 @@ void enemy_search(model_t& enemy) {
 	}
 }
 
+void key_active_chk(wall_t& key) {
+	//key active
+	if (keys[key.id - 4] != 1) {
+		if (b_2d) {
+			key.active = false;
+
+			if (cur_map.map[(int)hero->cur_pos.x][key.wallpos] == 1) {
+				keys[key.id - 4] = 1;
+			}
+
+			if (cur_map.map[(int)hero->cur_pos.x][walls[12].wallpos] == 0) {
+				models[key.id].active = true;
+				obj_3d_pos(models[key.id], cur_map, scene, vec2(hero->cur_pos.x, (float)key.wallpos));
+			}
+		}
+		else {
+			key.active = true;
+			models[key.id].active = false;
+			if (cur_map.map[(int)models[key.id].cur_pos.x][(int)models[key.id].cur_pos.y] == models[key.id].index)
+				cur_map.map[(int)models[key.id].cur_pos.x][(int)models[key.id].cur_pos.y] = 0;
+		}
+	}
+}
+
 void rules_level(int level) {
 
 	if (is_exec) return;
@@ -387,30 +422,7 @@ void rules_level(int level) {
 	case 2:
 		enemy_killed(models[4]);
 		enemy_search(models[4]);
-
-		//key active
-
-		if (keys[walls[12].id - 4] != 1) {
-			if (b_2d) {
-				walls[12].active = false;
-
-				if (cur_map.map[(int)hero->cur_pos.x][walls[12].wallpos] == 1) { 
-					keys[walls[12].id - 4] = 1;
-				}
-
-				if (cur_map.map[(int)hero->cur_pos.x][walls[12].wallpos] == 0) {
-					models[walls[12].id].active = true;
-					obj_3d_pos(models[walls[12].id], cur_map, scene, vec2(hero->cur_pos.x, (float)walls[12].wallpos));
-				}
-			}
-			else {
-				walls[12].active = true;
-				models[walls[12].id].active = false;
-				if (cur_map.map[(int)models[walls[12].id].cur_pos.x][(int)models[walls[12].id].cur_pos.y] == models[walls[12].id].index)
-					cur_map.map[(int)models[walls[12].id].cur_pos.x][(int)models[walls[12].id].cur_pos.y] = 0;
-			}
-		}
-		
+		key_active_chk(walls[12]);
 		break;
 	case 3:
 		break;
@@ -1178,8 +1190,18 @@ void render()
 		glActiveTexture(GL_TEXTURE13);
 		glBindTexture(GL_TEXTURE_2D, KEY_warehouse);
 		glActiveTexture(GL_TEXTURE14);
-		glBindTexture(GL_TEXTURE_2D, PARTICLE1);
+		glBindTexture(GL_TEXTURE_2D, KEY_living);
 		glActiveTexture(GL_TEXTURE15);
+		glBindTexture(GL_TEXTURE_2D, KEY_kitchen);
+		glActiveTexture(GL_TEXTURE16);
+		glBindTexture(GL_TEXTURE_2D, KEY_bedroom);
+		glActiveTexture(GL_TEXTURE17);
+		glBindTexture(GL_TEXTURE_2D, KEY_bathroom);
+		glActiveTexture(GL_TEXTURE18);
+		glBindTexture(GL_TEXTURE_2D, CHECKING);
+		glActiveTexture(GL_TEXTURE19);
+		glBindTexture(GL_TEXTURE_2D, PARTICLE1);
+		glActiveTexture(GL_TEXTURE20);
 		glBindTexture(GL_TEXTURE_2D, PARTICLE2);
 		
 		i = 1;
@@ -1194,6 +1216,8 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); 
+			
+			if (i > 17) continue;
 			i++;
 		}
 		if (b_game) {
@@ -1203,7 +1227,7 @@ void render()
 				GLint uloc;
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
 				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 14);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 19);
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 				glUniform1i(glGetUniformLocation(program, "mode"), 2);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -1216,7 +1240,7 @@ void render()
 				GLint uloc;
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
 				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 15);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 20);
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 				glUniform1i(glGetUniformLocation(program, "mode"), 2);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -1394,6 +1418,12 @@ bool user_init()
 	BEACON_bathroom = cg_create_texture(beacon_bathroom, true); if (!BEACON_bathroom) return false;
 
 	KEY_warehouse = cg_create_texture(img_key_warehouse, true); if (!KEY_warehouse) return false;
+	KEY_living = cg_create_texture(img_key_living, true); if (!KEY_living) return false;
+	KEY_kitchen = cg_create_texture(img_key_kitchen, true); if (!KEY_kitchen) return false;
+	KEY_bedroom = cg_create_texture(img_key_bedroom, true); if (!KEY_bedroom) return false;
+	KEY_bathroom = cg_create_texture(img_key_bathroom, true); if (!KEY_bathroom) return false;
+
+	CHECKING = cg_create_texture(img_checking, true); if (!CHECKING) return false;
 
 	CHARGE = cg_create_texture(img_charge, true); if (!CHARGE) return false;
 
