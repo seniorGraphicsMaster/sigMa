@@ -257,7 +257,7 @@ int game_over_chk() {
 			for (int j = (int)hero->cur_pos.y - 1; j < (int)hero->cur_pos.y + 2; j++) {
 				if (j < 0 || j >(int)cur_map.grid.y - 1) continue;
 				
-				if (cur_map.map[i][j] == 4) return 1;
+				if (cur_map.map[i][j] == 4 || cur_map.map[i][j] == 11) return 1;
 			}
 		}
 
@@ -327,7 +327,7 @@ void enemy_killed(model_t& enemy) {
 				else if (cur_map.map[i][(int)enemy.cur_pos.y] != CANMOVE) {
 					
 					if (is_exec) return;
-					killed_index = 4;
+					killed_index = enemy.index;
 					b_kill = true;
 					//is_exec = 1;
 					enemy.active = false;
@@ -340,10 +340,11 @@ void enemy_killed(model_t& enemy) {
 					}
 		
 					if (difficulty == 1) {
-						models[6].active = true;
-						obj_3d_pos(models[6], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
+						if (killed_index == 4) {
+							models[6].active = true;
+							obj_3d_pos(models[6], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
+						}
 					}
-
 				}
 			}
 		}
@@ -381,6 +382,7 @@ void rules_level(int level) {
 	switch (level) {
 	case 1:
 		enemy_killed(models[4]);
+		enemy_killed(models[11]);
 		break;
 	case 2:
 		enemy_killed(models[4]);
@@ -391,6 +393,10 @@ void rules_level(int level) {
 		if (keys[walls[12].id - 4] != 1) {
 			if (b_2d) {
 				walls[12].active = false;
+
+				if (cur_map.map[(int)hero->cur_pos.x][walls[12].wallpos] == 1) { 
+					keys[walls[12].id - 4] = 1;
+				}
 
 				if (cur_map.map[(int)hero->cur_pos.x][walls[12].wallpos] == 0) {
 					models[walls[12].id].active = true;
@@ -831,7 +837,7 @@ void init_state(int level) {
 
 		//set wood pos
 		obj_3d_pos(models[2], cur_map, 6, vec2(1, 5));
-		obj_3d_pos(models[3], cur_map, 6, vec2(1, 6));
+		obj_3d_pos(models[3], cur_map, 6, vec2(2, 2));
 
 		//set door pos
 		obj_2d_pos(walls[1], 6, 0, 8, 0, vec2(1, 2));
@@ -847,12 +853,10 @@ void init_state(int level) {
 		//set all object false
 		set_false();
 
-		walls[6].active = true;
 		walls[7].active = true;
 		walls[11].active = true;
 
 		//set beacon
-		obj_floor_pos(walls[6], 7, vec2(6, 2));
 		obj_floor_pos(walls[7], 7, vec2(1, 13));
 
 		//set charge
@@ -862,6 +866,7 @@ void init_state(int level) {
 		models[2].active = true;
 		models[3].active = true;
 		models[4].active = true;
+		models[11].active = true;
 
 		//set hero pos
 		obj_3d_pos(*hero, cur_map, 7, vec2(0, 1));
@@ -873,6 +878,8 @@ void init_state(int level) {
 		//set enemy pos
 		models[4].theta = PI / 2;
 		obj_3d_pos(models[4], cur_map, 7, vec2(8, 11));
+		models[11].theta = 0;
+		obj_3d_pos(models[11], cur_map, 7, vec2(6, 3));
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
@@ -905,7 +912,7 @@ void init_state(int level) {
 		obj_2d_pos(walls[6], 6, 1, 2, 1, vec2(1, 1));
 
 		//set charge
-		obj_floor_pos(walls[11], 6, vec2(4, 9));
+		obj_floor_pos(walls[11], 6, vec2(0, 0));
 
 		//active obj
 		models[10].active = true;
@@ -913,10 +920,10 @@ void init_state(int level) {
 		models[5].active = false;
 
 		//set hero pos
-		obj_3d_pos(*hero, cur_map, 6, vec2(3, 6));
+		obj_3d_pos(*hero, cur_map, 6, vec2(2, 3));
 
 		//set wood pos
-		obj_3d_pos(models[3], cur_map, 6, vec2(1, 5));
+		obj_3d_pos(models[3], cur_map, 6, vec2(1, 7));
 		obj_3d_pos(models[10], cur_map, 6, vec2(1, 6));
 
 		//set door pos
