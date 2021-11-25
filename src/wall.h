@@ -9,9 +9,10 @@ struct wall_t
 	vec3	center = vec3(0);		// 2D position for translation
 	vec2	size = vec2(0);
 	bool	active = false;
-	vec2	pos = vec2(0);
-	int		direction = 0;
-	int		wallpos = 0;
+	vec2	pos = vec2(-1, -1);
+	int		direction = -1;
+	int		wallpos = -1;
+	int		wallpos_z = -1;
 
 	float	theta = 0.0f;
 	float	z_theta = 0.0f;
@@ -45,8 +46,19 @@ inline std::vector<wall_t> set_wall() {
 	arr.emplace_back(m);
 	m = {5, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//beacon 5
 	arr.emplace_back(m);
-	m = {0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//charge
+	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//charge
 	arr.emplace_back(m);
+	m = { 5, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 1
+	arr.emplace_back(m);
+	//m = { 6, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 2
+	arr.emplace_back(m);
+	//m = { 7, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 3
+	arr.emplace_back(m);
+	//m = { 8, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 4
+	arr.emplace_back(m);
+	//m = { 9, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 5
+	arr.emplace_back(m);
+	
 	return arr;
 }
 inline void wall_t::setSize()
