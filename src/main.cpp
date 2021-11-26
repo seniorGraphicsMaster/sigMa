@@ -312,7 +312,6 @@ void game_over() {
 
 void door_active_chk() {
 	for (int i = 6; i < 11; i++) {
-		printf("%d\n", i);
 		if (walls[i].active) {
 			if (walls[i].pos.x > -1) {
 				if (cur_map.map[(int)walls[i].pos.x][(int)walls[i].pos.y] != 0) {walls[walls[i].id].active = true; }
