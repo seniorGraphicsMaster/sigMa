@@ -421,10 +421,14 @@ void rules_level(int level) {
 		break;
 	case 2:
 		enemy_killed(models[4]);
+		enemy_killed(models[11]);
 		enemy_search(models[4]);
 		key_active_chk(walls[12]);
 		break;
 	case 3:
+		enemy_killed(models[4]);
+		enemy_search(models[4]);
+		key_active_chk(walls[12]);
 		break;
 	}
 	
@@ -845,7 +849,7 @@ void init_state(int level) {
 		models[5].active = true;
 
 		//set hero pos
-		obj_3d_pos(*hero, cur_map, 6, vec2(2, 4));
+		obj_3d_pos(*hero, cur_map, 6, vec2(4, 9));
 
 		//set wood pos
 		obj_3d_pos(models[2], cur_map, 6, vec2(1, 5));
@@ -921,6 +925,144 @@ void init_state(int level) {
 		walls[12].active = true;
 
 		//set beacon
+		obj_floor_pos(walls[6], 6, vec2(1, 0));
+
+		//set charge
+		obj_floor_pos(walls[11], 6, vec2(0, 7));
+
+		//active obj
+		models[2].active = true;
+		models[3].active = true;
+		models[5].active = false;
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 6, vec2(0, 7));
+
+		//set wood pos
+		obj_3d_pos(models[3], cur_map, 6, vec2(1, 2));
+		obj_3d_pos(models[2], cur_map, 6, vec2(3, 9));
+
+		//set door pos
+		obj_2d_pos(walls[1], 6, 1, 3, 0, vec2(1, 2));
+
+		//set key pos
+		obj_2d_pos(walls[12], 6, 0, 4, 0, vec2(1, 2));
+		capture(6);
+
+		//-----------state scene 7-----------------
+
+		cur_map = maps[1];
+
+		//set all object false
+		set_false();
+		walls[6].active = true;
+		walls[7].active = true;
+		walls[8].active = true;
+		walls[11].active = true;
+
+		//set beacon
+		obj_floor_pos(walls[6], 7, vec2(4, 2));
+		obj_floor_pos(walls[7], 7, vec2(6, 13));
+		obj_2d_pos(walls[8], 7, 1, 2, 1, vec2(1, 1));
+
+		//set charge
+		obj_floor_pos(walls[11], 7, vec2(13, 7));
+
+		//active obj
+		models[7].active = true;
+
+		models[2].active = true;
+		models[3].active = true;
+		models[10].active = true;
+		models[13].active = true;
+
+		models[4].active = true;
+		models[11].active = true;
+
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 7, vec2(0, 1));
+
+		//set wood pos
+		obj_3d_pos(models[2], cur_map, 7, vec2(1, 3));
+		obj_3d_pos(models[10], cur_map, 7, vec2(4, 10));
+		obj_3d_pos(models[3], cur_map, 7, vec2(11, 9));
+		obj_3d_pos(models[13], cur_map, 7, vec2(12, 9));
+
+
+		//set enemy pos
+		models[4].theta = 0;
+		obj_3d_pos(models[4], cur_map, 7, vec2(5, 3));
+		models[11].theta = PI / 2;
+		obj_3d_pos(models[11], cur_map, 7, vec2(9, 14));
+
+		//set door pos
+		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
+		obj_2d_pos(walls[2], 7, 1, 8, 0, vec2(1, 2));
+		obj_2d_pos(walls[3], 7, 0, 10, 0, vec2(1, 2));
+
+		//set key pos
+		obj_3d_pos(models[7], cur_map, 7, vec2(14, 13));
+
+		capture(7);
+
+		//-----------state scene 9-------------------
+
+		cur_map = maps[3];
+
+		//set all object false
+		set_false();
+
+		walls[8].active = true;
+		walls[11].active = true;
+
+		//set beacon
+		obj_floor_pos(walls[8], 9, vec2(1, 0));
+
+		//set charge
+		obj_floor_pos(walls[11], 9, vec2(0, 7));
+
+		//active obj
+
+		models[6].active = true;
+
+		models[2].active = true;
+		models[3].active = true;
+		models[5].active = false;
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 9, vec2(4, 9));
+
+		//set wood pos
+		obj_3d_pos(models[3], cur_map, 9, vec2(0, 2));
+		obj_3d_pos(models[2], cur_map, 9, vec2(0, 3));
+
+		//set door pos
+		obj_2d_pos(walls[3], 9, 1, 4, 0, vec2(1, 2));
+
+		//set key pos
+		obj_3d_pos(models[6], cur_map, 9, vec2(6, 0));
+		capture(9);
+
+		break;
+	case 3:
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(25.0f, 120.0f);
+
+		//-----------state scene 6-------------------
+
+		cur_map = maps[0];
+
+		//set all object false
+		set_false();
+
+		walls[6].active = true;
+		walls[11].active = true;
+		walls[12].active = true;
+
+		//set beacon
 		obj_2d_pos(walls[6], 6, 1, 2, 1, vec2(1, 1));
 
 		//set charge
@@ -944,9 +1086,6 @@ void init_state(int level) {
 		//set key pos
 		obj_2d_pos(walls[12], 6, 0, 4, 0, vec2(1, 2));
 		capture(6);
-
-		break;
-	case 3:
 		break;
 	}
 
@@ -1555,6 +1694,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 					case 2: //black
 						break;
 					case 3: // yellow
+						if (scene == 9) scene = 7;
+						else scene = 9;
 						break;
 					case 4: // red
 						break;
@@ -1590,6 +1731,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						printf("game clear!!!!!\n");
 						break;
 					case 3: // yellow
+						if (scene == 9) scene = 7;
+						else scene = 9;
 						break;
 					case 4: // red
 						break;
