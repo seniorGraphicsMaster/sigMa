@@ -346,7 +346,7 @@ void enemy_killed(model_t& enemy) {
 		if (enemy.active) {
 			for (int i = int(cur_map.grid.x) - 1; i > -1; i--) {
 				if ((int)enemy.cur_pos.x == i) break;
-				else if (cur_map.map[i][(int)enemy.cur_pos.y] != CANMOVE) {
+				else if (cur_map.map[i][(int)enemy.cur_pos.y] != CANMOVE && cur_map.map[i][(int)enemy.cur_pos.y] != -1) {
 					
 					if (is_exec) return;
 					killed_index = enemy.index;
@@ -368,6 +368,13 @@ void enemy_killed(model_t& enemy) {
 							obj_3d_pos(models[6], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
 						}
 					}
+
+					if (difficulty == 3) {
+						if (killed_index == 15) {
+							models[8].active = true;
+							obj_3d_pos(models[8], cur_map, 7, vec2(models[killed_index].cur_pos.x, models[killed_index].cur_pos.y));
+						}
+					}
 				}
 			}
 		}
@@ -379,20 +386,20 @@ void enemy_killed(model_t& enemy) {
 void enemy_search(model_t& enemy) {
 	if (enemy.active && !pause) {
 		if (t - flower[enemy.index].latest_search > flower[enemy.index].search_interval) {
-			if (abs(enemy.cur_pos.x - hero->cur_pos.x) <= 4.0f && abs(enemy.cur_pos.y - hero->cur_pos.y) <= 3.0f) {
-				if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 3.0f) { // left
+			if (abs(enemy.cur_pos.x - hero->cur_pos.x) <= 4.0f && abs(enemy.cur_pos.y - hero->cur_pos.y) <= 4.0f) {
+				if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 4.0f) { // left
 					enemy.left_move(cur_map, models, walls, keys);
 					enemy.theta = 0;
 				}
-				else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -3.0f) { //right
+				else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -4.0f) { //right
 					enemy.right_move(cur_map, models, walls, keys);
 					enemy.theta = PI;
 				}
-				if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -3.0f) { // up
+				if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -4.0f) { // up
 					enemy.up_move(cur_map, models, walls, keys);
 					enemy.theta = -PI / 2;
 				}
-				else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 3.0f) { // down
+				else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 4.0f) { // down
 					enemy.down_move(cur_map, models, walls, keys);
 					enemy.theta = PI / 2;
 				}
@@ -1199,7 +1206,6 @@ void init_state(int level) {
 		obj_floor_pos(walls[11], 7, vec2(13, 7));
 
 		//active obj
-		models[8].active = true;
 
 		models[2].active = true;
 		models[3].active = true;
@@ -1227,15 +1233,13 @@ void init_state(int level) {
 		models[11].theta = 0;
 		obj_3d_pos(models[11], cur_map, 7, vec2(9, 4));
 		models[15].theta = PI / 2;
-		obj_3d_pos(models[15], cur_map, 7, vec2(4, 12));
+		obj_3d_pos(models[15], cur_map, 7, vec2(13, 12));
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
 		obj_2d_pos(walls[2], 7, 1, 8, 0, vec2(1, 2));
 		obj_2d_pos(walls[4], 7, 0, 10, 0, vec2(1, 2));
-
-		//set key pos
-		obj_3d_pos(models[8], cur_map, 7, vec2(14, 13));
+		
 
 		capture(7);
 
