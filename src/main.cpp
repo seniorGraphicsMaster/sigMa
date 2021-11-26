@@ -118,6 +118,7 @@ struct state
 	std::vector<wall_t> save_wall;
 	float save_time_passed;
 	float save_charge;
+	int	  pat1;
 
 };
 
@@ -216,6 +217,7 @@ float	start_t;
 float	start_charge;
 int		is_exec = 0;
 int		help_count = 0;
+int		pat1_count = 0;
 
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
@@ -252,6 +254,7 @@ light_t		light;
 material_t	materials;
 herostate	hero_state;
 enemy_state flower;
+enemy_state flower2 = { 0.5f, 0.0f };
 
 
 #pragma region GAME_MANAGE  //Game over check
@@ -276,7 +279,7 @@ int game_over_chk() {
 			for (int j = (int)hero->cur_pos.y - 1; j < (int)hero->cur_pos.y + 2; j++) {
 				if (j < 0 || j >(int)cur_map.grid.y - 1) continue;
 				
-				if (cur_map.map[i][j] == 4 || cur_map.map[i][j] == 11) return 1;
+				if (cur_map.map[i][j] == 4 || cur_map.map[i][j] == 11 || cur_map.map[i][j] == 15) return 1;
 			}
 		}
 
@@ -374,21 +377,54 @@ void enemy_killed(model_t& enemy) {
 
 
 void enemy_search(model_t& enemy) {
-	if (enemy.active) {
+	if (enemy.active && !pause) {
 		if (t - flower.latest_search > flower.search_interval) {
 			if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 4.0f) { // left
+				enemy.theta = 0;
 				enemy.left_move(cur_map, models, walls, keys);
 			}
 			else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -4.0f) { //right
+				enemy.theta = PI;
 				enemy.right_move(cur_map, models, walls, keys);
 			}
 			if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -4.0f) { // up
+				enemy.theta = -PI / 2;
 				enemy.up_move(cur_map, models, walls, keys);
 			}
 			else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 4.0f) { // down
+				enemy.theta = PI / 2;
 				enemy.down_move(cur_map, models, walls, keys);
 			}
 			flower.latest_search = t;
+		}
+	}
+}
+
+void enemy_move_pat1(model_t& enemy) {
+	if (enemy.active && !pause) {
+		if (t - flower2.latest_search > flower2.search_interval) {
+			printf("test2");
+			if (pat1_count < 2) {
+				enemy.down_move(cur_map, models, walls, keys);
+				enemy.theta = PI / 2;
+			}
+			else if (pat1_count <= 4) {
+				enemy.right_move(cur_map, models, walls, keys);
+				enemy.theta = PI;
+			}
+			else if (pat1_count <= 7) {
+				enemy.left_move(cur_map, models, walls, keys);
+				enemy.theta = 0;
+			}
+			else if (pat1_count <= 9) {
+				enemy.up_move(cur_map, models, walls, keys);
+				enemy.theta = -PI / 2;
+			}
+			pat1_count++;
+
+			if (pat1_count == 10) pat1_count = 0;
+			
+			flower2.latest_search = t;
 		}
 	}
 }
@@ -431,7 +467,9 @@ void rules_level(int level) {
 	case 2:
 		enemy_killed(models[4]);
 		enemy_killed(models[11]);
+		enemy_killed(models[15]);
 		enemy_search(models[4]);
+		enemy_move_pat1(models[15]);
 		key_active_chk(walls[12]);
 		break;
 	case 3:
@@ -446,6 +484,7 @@ void rules_level(int level) {
 void restart() {
 	b_2d = false;
 	b_game = false;
+	in_game = true;
 	b_sound = false;
 	is_exec = 0;
 	pause = false;
@@ -816,6 +855,7 @@ void key_capture() {
 
 	key_state.save_model = models;
 	key_state.save_wall = walls;
+	key_state.pat1 = pat1_count;
 }
 
 void reset() {
@@ -833,6 +873,7 @@ void reset() {
 	//load model setting
 	models = key_state.save_model;
 	walls = key_state.save_wall;
+	pat1_count = key_state.pat1;
 
 	load_game_scene(key_scene);
 	
@@ -904,6 +945,7 @@ void init_state(int level) {
 		//active obj
 		models[2].active = true;
 		models[3].active = true;
+
 		models[4].active = true;
 		models[11].active = true;
 
@@ -1001,6 +1043,7 @@ void init_state(int level) {
 
 		models[4].active = true;
 		models[11].active = true;
+		models[15].active = true;
 
 
 		//set hero pos
@@ -1018,6 +1061,8 @@ void init_state(int level) {
 		obj_3d_pos(models[4], cur_map, 7, vec2(5, 3));
 		models[11].theta = PI / 2;
 		obj_3d_pos(models[11], cur_map, 7, vec2(9, 14));
+		models[15].theta = PI / 2;
+		obj_3d_pos(models[15], cur_map, 7, vec2(11, 14));
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
