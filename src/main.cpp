@@ -65,6 +65,7 @@ static const char* img_key_living = "texture/key_black.png";
 static const char* img_key_kitchen = "texture/key_yellow.png";
 static const char* img_key_bedroom = "texture/key_red.png";
 static const char* img_key_bathroom = "texture/key_blue.png";
+static const char* img_end = "images/ending.png";
 static const char* img_checking = "texture/checking.png";
 static const char* img_charge = "texture/charge.jpg";
 static const char* img_start = "images/hero.png";
@@ -159,25 +160,31 @@ GLuint	WALL_living = 0;
 GLuint	WALL_kitchen = 0;
 GLuint	WALL_bedroom = 0;
 GLuint	WALL_bathroom = 0;
+
 GLuint	DOOR_warehouse = 0;
 GLuint	DOOR_living = 0;
 GLuint	DOOR_kitchen = 0;
 GLuint	DOOR_bedroom = 0;
 GLuint	DOOR_bathroom = 0;
+
 GLuint	BEACON_warehouse = 0;
 GLuint	BEACON_living = 0;
 GLuint	BEACON_kitchen = 0;
 GLuint	BEACON_bedroom = 0;
 GLuint	BEACON_bathroom = 0;
+
 GLuint	KEY_warehouse = 0;
 GLuint	KEY_living = 0;
 GLuint	KEY_kitchen = 0;
 GLuint	KEY_bedroom = 0;
 GLuint	KEY_bathroom = 0;
+
 GLuint  CHARGE = 0;
 GLuint	CHECKING = 0;
+
 GLuint	START = 0;
 GLuint	HELP = 0;
+GLuint	END = 0;
 
 GLuint		VAO_IMAGE;
 GLuint		VAO_BACKGROUND;			// vertex array for text objects
@@ -200,6 +207,7 @@ bool	b_kill = false;
 bool	b_sound = false;
 bool	in_game = false;
 bool	now_charge = false;
+bool	b_clear = false;
 float	t;
 float	dead_interval = 1.5f;
 float	t_game;
@@ -207,6 +215,7 @@ float	t_kill;
 float	start_t;
 float	start_charge;
 int		is_exec = 0;
+int		help_count = 0;
 
 auto	models = std::move(set_pos()); // positions of models
 auto	maps = std::move(create_grid());
@@ -662,12 +671,26 @@ void load_help_scene() {
 	render_text("Instruction", 200, 60, 1.0f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
 	render_text("Room escape game that goes beyond 2D and 3D.", 100, 100, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 
-	render_text("You have to escape within the limited time.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-	render_text("You can move using up, down, left, right keys.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-	render_text("Press 'F' button to change the dimension.", 30, 300, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-	render_text("Press 'A' button to pull the object.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-	render_text("Press 'S' button to push the object.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-	render_text("You can reset the game by using 'R' button.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	if (help_count == 1) {
+		render_text("You have to escape within the limited time.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("You can move using up, down, left, right keys.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Press 'F' button to change the dimension.", 30, 300, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Press 'A' button to pull the object.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Press 'S' button to push the object.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Only one object can be pushed/pulled at a time.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	}
+	else if (help_count == 2) {
+		render_text("You can reset the game by using 'R' button.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Something special happens when you obscure a 2d object.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("When in 2d mode, it will die if it is obscured by an object.", 30, 300, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Enemies will also die if they are obscured by objects in 2d mode.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("It dies when it runs out of energy.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Energy can be recharged at a charging station.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	}
+	else if (help_count == 3) {
+		render_text("If you acquire a key, your progress will be saved.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Go through the door and go to the next room.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	}
 }
 
 void load_game_scene(int scene) {
@@ -1244,6 +1267,26 @@ void render()
 {
 	render_init();
 
+	if (b_clear) { // end phase
+		if (engine->isCurrentlyPlaying(background_src)) {
+			engine->stopAllSounds();
+			engine->play2D(gameend_src, true);
+
+		}
+		b_2d = false;
+		glUseProgram(program_img);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, END);
+		glUniform1i(glGetUniformLocation(program_img, "TEX"), 0);
+		glBindVertexArray(VAO_IMAGE);
+		// render quad vertices
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		float dpi_scale = cg_get_dpi_scale();
+		render_text("GAME CLEAR!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.5f, 0.5f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'ESC' to finish the game", window_size.x / 2 - 130, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		goto skip;
+	}
+
 	// notify GL that we use our own program
 	if (b_game && ( t - t_game > dead_interval)) {
 		if (!engine->isCurrentlyPlaying(gameover_src) && !b_sound) {
@@ -1540,8 +1583,11 @@ bool user_init()
 	WALL_kitchen = cg_create_texture(wall_kitchen, true); if (!WALL_kitchen) return false;
 	WALL_bedroom = cg_create_texture(wall_bedroom, true); if (!WALL_bedroom) return false;
 	WALL_bathroom = cg_create_texture(wall_bathroom, true); if (!WALL_bathroom) return false;
+	
 	START = cg_create_texture(img_start, true); if (!START) return false;
+	END = cg_create_texture(img_end, true); if (!END) return false;
 	HELP = cg_create_texture(img_help, true); if (!START) return false;
+	
 	wall_tex[0] = WALL_warehouse; wall_tex[1] = WALL_living; wall_tex[2] = WALL_kitchen; wall_tex[3] = WALL_bedroom; wall_tex[4] = WALL_bathroom;
 
 	DOOR_warehouse = cg_create_texture(object_door_warehouse, true); if (!DOOR_warehouse) return false;
@@ -1611,9 +1657,18 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		}
 		else if (key == GLFW_KEY_H || key == GLFW_KEY_F1) {
 			if (scene > 5) {
-				pause = true;
-				in_game = false;
-				b_help = true;
+				if (help_count < 3) {
+					pause = true;
+					in_game = false;
+					b_help = true;
+					help_count++;
+				}
+				else {
+					pause = false;
+					in_game = true;
+					b_help = false;
+					help_count = 0;
+				}
 			}
 		}
 		else if (key == GLFW_KEY_1) {
@@ -1692,6 +1747,8 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						else scene = 6;
 						break;
 					case 2: //black
+						printf("game clear!!!!!\n");
+						b_clear = true;
 						break;
 					case 3: // yellow
 						if (scene == 9) scene = 7;
@@ -1729,6 +1786,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						break;
 					case 2: //black
 						printf("game clear!!!!!\n");
+						b_clear = true;
 						break;
 					case 3: // yellow
 						if (scene == 9) scene = 7;
@@ -1767,11 +1825,6 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 		else if (key == GLFW_KEY_S)
 		{
 			if (hero->action != PUSH) hero->action = 0;
-		}
-		else if (key == GLFW_KEY_F1 || key == GLFW_KEY_H) {
-			pause = false;
-			in_game = true;
-			b_help = false;
 		}
 	}
 }
