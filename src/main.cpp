@@ -124,7 +124,7 @@ struct state
 
 struct enemy_state
 {
-	float search_interval = 2.0f;
+	float search_interval = 1.3f;
 	float latest_search = 0.0f;
 };
 
@@ -253,7 +253,7 @@ trackball	tb;
 light_t		light;
 material_t	materials;
 herostate	hero_state;
-enemy_state flower;
+enemy_state flower[30];
 enemy_state flower2 = { 0.5f, 0.0f };
 
 
@@ -378,24 +378,27 @@ void enemy_killed(model_t& enemy) {
 
 void enemy_search(model_t& enemy) {
 	if (enemy.active && !pause) {
-		if (t - flower.latest_search > flower.search_interval) {
-			if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 4.0f) { // left
-				enemy.left_move(cur_map, models, walls, keys);
-				enemy.theta = 0;
+		if (t - flower[enemy.index].latest_search > flower[enemy.index].search_interval) {
+			if (abs(enemy.cur_pos.x - hero->cur_pos.x) <= 4.0f && abs(enemy.cur_pos.y - hero->cur_pos.y) <= 3.0f) {
+				if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 3.0f) { // left
+					enemy.left_move(cur_map, models, walls, keys);
+					enemy.theta = 0;
+				}
+				else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -3.0f) { //right
+					enemy.right_move(cur_map, models, walls, keys);
+					enemy.theta = PI;
+				}
+				if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -3.0f) { // up
+					enemy.up_move(cur_map, models, walls, keys);
+					enemy.theta = -PI / 2;
+				}
+				else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 3.0f) { // down
+					enemy.down_move(cur_map, models, walls, keys);
+					enemy.theta = PI / 2;
+				}
 			}
-			else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -4.0f) { //right
-				enemy.right_move(cur_map, models, walls, keys);
-				enemy.theta = PI;
-			}
-			if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -4.0f) { // up
-				enemy.up_move(cur_map, models, walls, keys);
-				enemy.theta = -PI / 2;
-			}
-			else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 4.0f) { // down
-				enemy.down_move(cur_map, models, walls, keys);
-				enemy.theta = PI / 2;
-			}
-			flower.latest_search = t;
+			
+			flower[enemy.index].latest_search = t;
 		}
 	}
 }
@@ -487,9 +490,12 @@ void rules_level(int level) {
 
 		break;
 	case 3:
+		enemy_killed(models[4]);
 		enemy_killed(models[11]);
 		enemy_killed(models[15]);
 		enemy_search(models[4]);
+		enemy_search(models[11]);
+		enemy_search(models[15]);
 		key_active_chk(walls[12], 6);
 
 		if (scene == 9 && keys[3] != 1) {
@@ -534,7 +540,7 @@ void charging() {
 				start_charge = float(glfwGetTime());
 				now_charge = !now_charge;
 			}
-			hero_state.total_charging = hero_state.save_charging + (t - start_charge) * 3;
+			hero_state.total_charging = hero_state.save_charging + (t - start_charge) * 4;
 			if (hero_state.left_energy + hero_state.total_charging > hero_state.energy) hero_state.total_charging = hero_state.energy - hero_state.left_energy;
 			
 		}
@@ -1135,7 +1141,7 @@ void init_state(int level) {
 
 		//time set
 		start_t = float(glfwGetTime());
-		hero_state = herostate(25.0f, 120.0f);
+		hero_state = herostate(35.0f, 180.0f);
 
 		//-----------state scene 6-------------------
 
@@ -1200,6 +1206,7 @@ void init_state(int level) {
 		models[10].active = true;
 		models[13].active = true;
 
+		models[4].active = true;
 		models[11].active = true;
 		models[15].active = true;
 
@@ -1215,10 +1222,12 @@ void init_state(int level) {
 
 
 		//set enemy pos
-		models[11].theta = PI / 2;
-		obj_3d_pos(models[11], cur_map, 7, vec2(9, 14));
+		models[4].theta = PI / 2;
+		obj_3d_pos(models[4], cur_map, 7, vec2(2, 5));
+		models[11].theta = 0;
+		obj_3d_pos(models[11], cur_map, 7, vec2(9, 4));
 		models[15].theta = PI / 2;
-		obj_3d_pos(models[15], cur_map, 7, vec2(11, 14));
+		obj_3d_pos(models[15], cur_map, 7, vec2(4, 12));
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
