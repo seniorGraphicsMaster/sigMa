@@ -50,23 +50,13 @@ inline std::vector<wall_t> set_wall() {
 	arr.emplace_back(m);
 	m = { 5, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 1
 	arr.emplace_back(m);
-	m = { 6, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 2
+	//m = { 6, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 2
 	arr.emplace_back(m);
-	m = { 7, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 3
+	//m = { 7, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 3
 	arr.emplace_back(m);
-	m = { 8, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 4
+	//m = { 8, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 4
 	arr.emplace_back(m);
-	m = { 9, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 5
-	arr.emplace_back(m);
-	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 1
-	arr.emplace_back(m);
-	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 2
-	arr.emplace_back(m);
-	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 3
-	arr.emplace_back(m);
-	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 4
-	arr.emplace_back(m);
-	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 5
+	//m = { 9, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 5
 	arr.emplace_back(m);
 	
 	return arr;
