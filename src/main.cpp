@@ -312,10 +312,11 @@ void game_over() {
 
 void door_active_chk() {
 	for (int i = 6; i < 11; i++) {
+		printf("%d\n", i);
 		if (walls[i].active) {
 			if (walls[i].pos.x > -1) {
-				if (cur_map.map[(int)walls[i].pos.x][(int)walls[i].pos.y] != 0) walls[walls[i].id].active = true;
-				else walls[walls[i].id].active = false;
+				if (cur_map.map[(int)walls[i].pos.x][(int)walls[i].pos.y] != 0) {walls[walls[i].id].active = true; }
+				else {walls[walls[i].id].active = false;}
 			}
 			else if (walls[i].direction == 0) {
 				if (walls[i].wallpos_z == 1) {
@@ -518,6 +519,15 @@ void rules_level(int level) {
 							models[7].active = false;
 						}
 					}
+				}
+			}
+		}
+
+		if (scene == 8) {
+			if (cur_map.map[2][1] == 2 || cur_map.map[2][1] == 3) {
+				if (cur_map.map[4][6] == 2 || cur_map.map[4][6] == 3) {
+					models[10].active = true;
+					obj_3d_pos(models[10], cur_map, 8, vec2(2, 7));
 				}
 			}
 		}
@@ -827,8 +837,8 @@ void load_game_scene(int scene) {
 		cur_tex = 2;
 
 		//set wall
-		walls[0].center = vec3(-76.99f, 0.0f, 26.0f);
-		walls[0].size = vec2(79.0f, 50.0f);
+		walls[0].center = vec3(-39.49f, 0.0f, 26.0f);
+		walls[0].size = vec2(154.0f, 50.0f);
 		break;
 	case 9:
 		b_2d = false;
@@ -1192,15 +1202,19 @@ void init_state(int level) {
 
 		//set all object false
 		set_false();
-		walls[6].active = true;
-		walls[7].active = true;
+		walls[1].active = true;
+		walls[3].active = true;
+
+		//walls[7].active = true;
 		walls[9].active = true;
+		walls[10].active = true;
+
 		walls[11].active = true;
 
 		//set beacon
-		obj_floor_pos(walls[6], 7, vec2(4, 2));
-		obj_floor_pos(walls[7], 7, vec2(10, 2));
-		obj_2d_pos(walls[9], 7, 1, 2, 1, vec2(1, 1));
+		obj_floor_pos(walls[7], 7, vec2(10, 2)); // black
+		obj_floor_pos(walls[10], 7, vec2(4, 11)); // bathroom
+		obj_2d_pos(walls[9], 7, 0, 4, 1, vec2(1, 1)); // bedroom
 
 		//set charge
 		obj_floor_pos(walls[11], 7, vec2(13, 7));
@@ -1237,8 +1251,10 @@ void init_state(int level) {
 
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
-		obj_2d_pos(walls[2], 7, 1, 8, 0, vec2(1, 2));
+		obj_2d_pos(walls[2], 7, 1, 7, 0, vec2(1, 2));
+		obj_2d_pos(walls[3], 7, 1, 2, 0, vec2(1, 2));
 		obj_2d_pos(walls[4], 7, 0, 10, 0, vec2(1, 2));
+		obj_2d_pos(walls[5], 7, 1, 12, 0, vec2(1, 2));
 		
 
 		capture(7);
@@ -1284,6 +1300,42 @@ void init_state(int level) {
 		obj_2d_pos(walls[4], 9, 1, 4, 0, vec2(1, 2));
 
 		capture(9);
+
+		//-----------state scene 8-------------------
+
+		cur_map = maps[2];
+
+		//set all object false
+		set_false();
+
+		walls[3].active = true;
+
+		walls[11].active = true;
+
+		walls[17].active = true;
+		walls[18].active = true;
+
+		//set charge
+		obj_floor_pos(walls[11], 8, vec2(4, 1));
+
+		//active obj
+		models[2].active = true;
+		models[3].active = true;
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 8, vec2(2, 9));
+
+		//set wood pos
+		obj_3d_pos(models[2], cur_map, 8, vec2(0, 9));
+		obj_3d_pos(models[3], cur_map, 8, vec2(0, 8));
+
+		//set door pos
+		obj_2d_pos(walls[3], 8, 1, 2, 0, vec2(1, 2));
+
+		//set checking
+		obj_floor_pos(walls[17], 8, vec2(2, 1));
+		obj_floor_pos(walls[18], 8, vec2(4, 6));
+		capture(8);
 
 
 		break;
