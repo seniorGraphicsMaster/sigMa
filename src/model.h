@@ -65,6 +65,14 @@ inline std::vector<model_t> set_pos() {
 	arr.emplace_back(m);
 	m = {10, 13, vec3(0),1.0f, false, true, vec2(0) };//wood_double box
 	arr.emplace_back(m);
+	m = {11, 7, vec3(0),1.0f, false, false, vec2(0) };//flower
+	arr.emplace_back(m);
+	m = {12, 13, vec3(0),1.0f, false, true, vec2(0) };//wood_double box
+	arr.emplace_back(m);
+	m = {13, 2, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
+	arr.emplace_back(m);
+	m = {14, 2, vec3(15.0f, 22.5f,1.0f),1.0f, true, true, vec2(3,6) };//wood_box
+	arr.emplace_back(m);
 	
 	return arr;
 }
@@ -357,16 +365,17 @@ inline int model_t::left_move_2d(map_t& cur_map, std::vector<model_t>& models, s
 	if (next_pos.y < 0) return 0;
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 1;
-		models[next_val].active = false;
-		ret = 6;
-	}
-	else {
-		//line check
-		for (int i = (int)cur_pos.x; i < cur_map.grid.x; i++) {
-			if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return 0;
+	//line check
+	for (int i = (int)cur_map.grid.x - 1; i >= (int)cur_pos.x ; i--) {
+		if (i == cur_pos.x) {
+			if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+				keys[next_val - 4] = 1;
+				models[next_val].active = false;
+				ret = 6;
+			}
+			else if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return 0;
 		}
+		else if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return 0;
 	}
 
 	cur_map.map[(int)next_pos.x][(int)next_pos.y] = 1;
@@ -387,16 +396,18 @@ inline int model_t::right_move_2d(map_t& cur_map, std::vector<model_t>& models, 
 	if (next_pos.y > cur_map.grid.y - 1) return 0;
 
 	int next_val = cur_map.map[int(next_pos.x)][int(next_pos.y)];
-	if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
-		keys[next_val - 4] = 1;
-		models[next_val].active = false;
-		ret = 6;
-	}
-	else {
-		//line check
-		for (int i = (int)cur_pos.x; i < cur_map.grid.x; i++) {
-			if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return 0;
+	
+	//line check
+	for (int i = (int)cur_map.grid.x - 1; i >= (int)cur_pos.x; i--) {
+		if (i == cur_pos.x) {
+			if (next_val == 5 || next_val == 6 || next_val == 7 || next_val == 8 || next_val == 9) {
+				keys[next_val - 4] = 1;
+				models[next_val].active = false;
+				ret = 6;
+			}
+			else if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return 0;
 		}
+		else if (cur_map.map[i][(int)next_pos.y] != CANMOVE) return 0;
 	}
 	
 	cur_map.map[(int)next_pos.x][(int)next_pos.y] = 1;
