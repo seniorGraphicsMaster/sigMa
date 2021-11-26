@@ -493,7 +493,7 @@ void rules_level(int level) {
 					for (int j = 0; j < (int)cur_map.grid.x; j++) {
 						if (cur_map.map[j][7] == 10) {
 							models[6].active = true;
-							cur_map.map[6][0] = 6;
+							obj_3d_pos(models[6], cur_map, 9, vec2(6, 0));
 							break;
 						}
 						else {
@@ -1133,9 +1133,6 @@ void init_state(int level) {
 		//set door pos
 		obj_2d_pos(walls[4], 9, 1, 4, 0, vec2(1, 2));
 
-		//set key pos
-		obj_3d_pos(models[6], cur_map, 9, vec2(6, 0));
-		cur_map.map[6][0] = 0;
 		capture(9);
 
 		break;
