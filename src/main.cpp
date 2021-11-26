@@ -527,7 +527,7 @@ void rules_level(int level) {
 			if (cur_map.map[2][1] == 2 || cur_map.map[2][1] == 3) {
 				if (cur_map.map[4][6] == 2 || cur_map.map[4][6] == 3) {
 					models[10].active = true;
-					obj_3d_pos(models[10], cur_map, 8, vec2(2, 7));
+					obj_3d_pos(models[9], cur_map, 8, vec2(2, 7));
 				}
 			}
 		}
