@@ -319,24 +319,24 @@ void door_active_chk() {
 				else {walls[walls[i].id].active = false;}
 			}
 			else if (walls[i].direction == 0) {
+				if (cur_map.map[0][walls[i].wallpos] != 0) walls[walls[i].id].active = true;
+				else walls[walls[i].id].active = false;
+				
 				if (walls[i].wallpos_z == 1) {
 					if (cur_map.map[0][walls[i].wallpos] == 10) walls[walls[i].id].active = true;
 					else walls[walls[i].id].active = false;
-					return;
 				}
-
-				if (cur_map.map[0][walls[i].wallpos] != 0) walls[walls[i].id].active = true;
-				else walls[walls[i].id].active = false;
+				
 			}
 			else if (walls[i].direction == 1) {
+				if (cur_map.map[walls[i].wallpos][(int)cur_map.grid.y - 1] != 0) walls[walls[i].id].active = true;
+				else walls[walls[i].id].active = false;
+				
 				if (walls[i].wallpos_z == 1) {
 					if (cur_map.map[walls[i].wallpos][(int)cur_map.grid.y - 1] == 10) walls[walls[i].id].active = true;
 					else walls[walls[i].id].active = false;
-					return;
 				}
 
-				if (cur_map.map[walls[i].wallpos][(int)cur_map.grid.y - 1] != 0) walls[walls[i].id].active = true;
-				else walls[walls[i].id].active = false;
 			}
 		}
 	}
@@ -1626,7 +1626,7 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
-			if (i == 18 && !b_2d) continue;
+			if (i == 18 && !b_2d && scene == 9) continue;
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); 
 			
 			if (i > 17) continue;
