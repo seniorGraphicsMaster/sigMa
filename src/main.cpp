@@ -380,20 +380,20 @@ void enemy_search(model_t& enemy) {
 	if (enemy.active && !pause) {
 		if (t - flower.latest_search > flower.search_interval) {
 			if (enemy.cur_pos.x - hero->cur_pos.x > 0.0f && enemy.cur_pos.x - hero->cur_pos.x <= 4.0f) { // left
-				enemy.theta = 0;
 				enemy.left_move(cur_map, models, walls, keys);
+				enemy.theta = 0;
 			}
 			else if (enemy.cur_pos.x - hero->cur_pos.x < 0.0f && enemy.cur_pos.x - hero->cur_pos.x >= -4.0f) { //right
-				enemy.theta = PI;
 				enemy.right_move(cur_map, models, walls, keys);
+				enemy.theta = PI;
 			}
 			if (enemy.cur_pos.y - hero->cur_pos.y < 0.0f && enemy.cur_pos.y - hero->cur_pos.y >= -4.0f) { // up
-				enemy.theta = -PI / 2;
 				enemy.up_move(cur_map, models, walls, keys);
+				enemy.theta = -PI / 2;
 			}
 			else if (enemy.cur_pos.y - hero->cur_pos.y > 0.0f && enemy.cur_pos.y - hero->cur_pos.y <= 4.0f) { // down
-				enemy.theta = PI / 2;
 				enemy.down_move(cur_map, models, walls, keys);
+				enemy.theta = PI / 2;
 			}
 			flower.latest_search = t;
 		}
@@ -403,7 +403,6 @@ void enemy_search(model_t& enemy) {
 void enemy_move_pat1(model_t& enemy) {
 	if (enemy.active && !pause) {
 		if (t - flower2.latest_search > flower2.search_interval) {
-			printf("test2");
 			if (pat1_count < 2) {
 				enemy.down_move(cur_map, models, walls, keys);
 				enemy.theta = PI / 2;
@@ -480,35 +479,36 @@ void rules_level(int level) {
 		enemy_killed(models[11]);
 		break;
 	case 2:
-		enemy_killed(models[4]);
+		enemy_killed(models[11]);
+		enemy_killed(models[15]);
+		enemy_move_pat1(models[15]);
+		key_active_chk(walls[12], 6);
+		key_active_chk(walls[13], 9);
+
+		break;
+	case 3:
 		enemy_killed(models[11]);
 		enemy_killed(models[15]);
 		enemy_search(models[4]);
-		enemy_move_pat1(models[15]);
 		key_active_chk(walls[12], 6);
 
-		if (scene == 9 && keys[2] != 1) {
+		if (scene == 9 && keys[3] != 1) {
 			for (int i = 0; i < (int)cur_map.grid.x; i++) {
 				if (cur_map.map[i][6] == 2) {
 					for (int j = 0; j < (int)cur_map.grid.x; j++) {
 						if (cur_map.map[j][7] == 10) {
-							models[6].active = true;
-							obj_3d_pos(models[6], cur_map, 9, vec2(6, 0));
+							models[7].active = true;
+							obj_3d_pos(models[7], cur_map, 9, vec2(6, 0));
 							break;
 						}
 						else {
-							models[6].active = false;
+							models[7].active = false;
 						}
 					}
 				}
 			}
 		}
 
-		break;
-	case 3:
-		enemy_killed(models[4]);
-		enemy_search(models[4]);
-		key_active_chk(walls[12], 6);
 		break;
 	}
 	
@@ -702,7 +702,7 @@ void load_start_scene(int scene) {
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		render_text("Please choose the difficulty of the game", 30, 100, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("#1 Easy - Number of room : 2", 30, 150, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("#2 Middle - Number of room : 4", 30, 200, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#2 Middle - Number of room : 3", 30, 200, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("#3 Hard - Number of room : 5", 30, 250, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Please press number of the difficulty to start", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
@@ -995,7 +995,7 @@ void init_state(int level) {
 
 		//time set
 		start_t = float(glfwGetTime());
-		hero_state = herostate(25.0f, 100.0f);
+		hero_state = herostate(30.0f, 110.0f);
 
 		//-----------state scene 6-------------------
 
@@ -1060,7 +1060,6 @@ void init_state(int level) {
 		models[10].active = true;
 		models[13].active = true;
 
-		models[4].active = true;
 		models[11].active = true;
 		models[15].active = true;
 
@@ -1076,8 +1075,146 @@ void init_state(int level) {
 
 
 		//set enemy pos
-		models[4].theta = 0;
-		obj_3d_pos(models[4], cur_map, 7, vec2(5, 3));
+		models[11].theta = PI / 2;
+		obj_3d_pos(models[11], cur_map, 7, vec2(9, 14));
+		models[15].theta = PI / 2;
+		obj_3d_pos(models[15], cur_map, 7, vec2(11, 14));
+
+		//set door pos
+		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
+		obj_2d_pos(walls[2], 7, 1, 8, 0, vec2(1, 2));
+		obj_2d_pos(walls[4], 7, 0, 10, 0, vec2(1, 2));
+
+		//set key pos
+		obj_3d_pos(models[8], cur_map, 7, vec2(14, 13));
+
+		capture(7);
+
+		//-----------state scene 9-------------------
+
+		cur_map = maps[3];
+
+		//set all object false
+		set_false();
+
+		walls[9].active = true;
+		walls[11].active = true;
+
+		walls[17].active = true;
+		walls[18].active = true;
+		walls[19].active = true;
+
+		//set beacon
+		obj_floor_pos(walls[9], 9, vec2(1, 0));
+
+		//set charge
+		obj_floor_pos(walls[11], 9, vec2(5, 1));
+
+		//active obj
+		models[2].active = true;
+		models[10].active = true;
+		models[5].active = false;
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 9, vec2(4, 9));
+
+		//set wood pos
+		obj_3d_pos(models[10], cur_map, 9, vec2(0, 2));
+		obj_3d_pos(models[2], cur_map, 9, vec2(0, 3));
+
+		//set key pos
+		obj_2d_pos(walls[13], 9, 0, 2, 0, vec2(1, 2));
+
+		//set door pos
+		obj_2d_pos(walls[4], 9, 1, 4, 0, vec2(1, 2));
+
+		capture(9);
+
+		break;
+	case 3:
+
+		//time set
+		start_t = float(glfwGetTime());
+		hero_state = herostate(25.0f, 120.0f);
+
+		//-----------state scene 6-------------------
+
+		cur_map = maps[0];
+
+		//set all object false
+		set_false();
+
+		walls[6].active = true;
+		walls[11].active = true;
+		walls[12].active = true;
+
+		//set beacon
+		obj_2d_pos(walls[6], 6, 1, 2, 1, vec2(1, 1));
+
+		//set charge
+		obj_floor_pos(walls[11], 6, vec2(0, 0));
+
+		//active obj
+		models[10].active = true;
+		models[3].active = true;
+		models[5].active = false;
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 6, vec2(2, 3));
+
+		//set wood pos
+		obj_3d_pos(models[3], cur_map, 6, vec2(1, 7));
+		obj_3d_pos(models[10], cur_map, 6, vec2(1, 6));
+
+		//set door pos
+		obj_2d_pos(walls[1], 6, 0, 8, 0, vec2(1, 2));
+
+		//set key pos
+		obj_2d_pos(walls[12], 6, 0, 4, 0, vec2(1, 2));
+		capture(6);
+
+		//-----------state scene 7-----------------
+
+		cur_map = maps[1];
+
+		//set all object false
+		set_false();
+		walls[6].active = true;
+		walls[7].active = true;
+		walls[9].active = true;
+		walls[11].active = true;
+
+		//set beacon
+		obj_floor_pos(walls[6], 7, vec2(4, 2));
+		obj_floor_pos(walls[7], 7, vec2(10, 2));
+		obj_2d_pos(walls[9], 7, 1, 2, 1, vec2(1, 1));
+
+		//set charge
+		obj_floor_pos(walls[11], 7, vec2(13, 7));
+
+		//active obj
+		models[8].active = true;
+
+		models[2].active = true;
+		models[3].active = true;
+		models[10].active = true;
+		models[13].active = true;
+
+		models[11].active = true;
+		models[15].active = true;
+
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 7, vec2(0, 1));
+
+		//set wood pos
+		obj_3d_pos(models[2], cur_map, 7, vec2(1, 3));
+		obj_3d_pos(models[10], cur_map, 7, vec2(4, 10));
+		obj_3d_pos(models[3], cur_map, 7, vec2(11, 9));
+		obj_3d_pos(models[13], cur_map, 7, vec2(12, 9));
+
+
+		//set enemy pos
 		models[11].theta = PI / 2;
 		obj_3d_pos(models[11], cur_map, 7, vec2(9, 14));
 		models[15].theta = PI / 2;
@@ -1135,48 +1272,7 @@ void init_state(int level) {
 
 		capture(9);
 
-		break;
-	case 3:
 
-		//time set
-		start_t = float(glfwGetTime());
-		hero_state = herostate(25.0f, 120.0f);
-
-		//-----------state scene 6-------------------
-
-		cur_map = maps[0];
-
-		//set all object false
-		set_false();
-
-		walls[6].active = true;
-		walls[11].active = true;
-		walls[12].active = true;
-
-		//set beacon
-		obj_2d_pos(walls[6], 6, 1, 2, 1, vec2(1, 1));
-
-		//set charge
-		obj_floor_pos(walls[11], 6, vec2(0, 0));
-
-		//active obj
-		models[10].active = true;
-		models[3].active = true;
-		models[5].active = false;
-
-		//set hero pos
-		obj_3d_pos(*hero, cur_map, 6, vec2(2, 3));
-
-		//set wood pos
-		obj_3d_pos(models[3], cur_map, 6, vec2(1, 7));
-		obj_3d_pos(models[10], cur_map, 6, vec2(1, 6));
-
-		//set door pos
-		obj_2d_pos(walls[1], 6, 0, 8, 0, vec2(1, 2));
-
-		//set key pos
-		obj_2d_pos(walls[12], 6, 0, 4, 0, vec2(1, 2));
-		capture(6);
 		break;
 	}
 
@@ -1820,12 +1916,16 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						b_clear = true;
 						break;
 					case 3: // yellow
+						if (scene == 8) scene = 7;
+						else scene = 8;
 						break;
 					case 4: // red
 						if (scene == 9) scene = 7;
 						else scene = 9;
 						break;
 					case 5: // blue
+						if (scene == 10) scene = 7;
+						else scene = 10;
 						break;
 					}
 
@@ -1858,12 +1958,16 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						b_clear = true;
 						break;
 					case 3: // yellow
+						if (scene == 8) scene = 7;
+						else scene = 8;
 						break;
 					case 4: // red
 						if (scene == 9) scene = 7;
 						else scene = 9;
 						break;
 					case 5: // blue
+						if (scene == 10) scene = 7;
+						else scene = 10;
 						break;
 					}
 

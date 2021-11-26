@@ -130,15 +130,17 @@ inline int model_t::left_move(map_t& cur_map, std::vector<model_t>& models, std:
 	vec2 pre_pos = vec2(cur_pos.x + 1, cur_pos.y);
 	if (pre_pos.x < cur_map.grid.x) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && models[pre_val].movable) {
-			model_t* obj = &models[pre_val];
+		if (pre_val != -1) {
+			if (action == PULL && models[pre_val].movable) {
+				model_t* obj = &models[pre_val];
 
-			obj->cur_pos = cur_pos;
-			obj->center.x -= 15.0f;
-			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
-			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
-			cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
-			just_move = false;
+				obj->cur_pos = cur_pos;
+				obj->center.x -= 15.0f;
+				cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
+				cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+				cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
+				just_move = false;
+			}
 		}
 	}
 
@@ -195,15 +197,17 @@ inline int model_t::right_move(map_t& cur_map, std::vector<model_t>& models, std
 	vec2 pre_pos = vec2(cur_pos.x - 1, cur_pos.y);
 	if (pre_pos.x > -1) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && models[pre_val].movable) {
-			model_t* obj = &models[pre_val];
+		if (pre_val != -1) {
+			if (action == PULL && models[pre_val].movable) {
+				model_t* obj = &models[pre_val];
 
-			obj->cur_pos = cur_pos;
-			obj->center.x += 15.0f;
-			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
-			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
-			cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
-			just_move = false;
+				obj->cur_pos = cur_pos;
+				obj->center.x += 15.0f;
+				cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
+				cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+				cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
+				just_move = false;
+			}
 		}
 	}
 
@@ -267,15 +271,18 @@ inline int model_t::up_move(map_t& cur_map, std::vector<model_t>& models, std::v
 	vec2 pre_pos = vec2(cur_pos.x, cur_pos.y - 1);
 	if (pre_pos.y > -1) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && models[pre_val].movable) {
-			model_t* obj = &models[pre_val];
 
-			obj->cur_pos = cur_pos;
-			obj->center.y += 15.0f;
-			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
-			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
-			cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
-			just_move = false;
+		if (pre_val != -1) {
+			if (action == PULL && models[pre_val].movable) {
+				model_t* obj = &models[pre_val];
+
+				obj->cur_pos = cur_pos;
+				obj->center.y += 15.0f;
+				cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
+				cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+				cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
+				just_move = false;
+			}
 		}
 	}
 	
@@ -331,15 +338,18 @@ inline int model_t::down_move(map_t& cur_map, std::vector<model_t>& models, std:
 	vec2 pre_pos = vec2(cur_pos.x, cur_pos.y + 1);
 	if (pre_pos.y < cur_map.grid.y) {
 		int pre_val = cur_map.map[int(pre_pos.x)][int(pre_pos.y)];
-		if (action == PULL && models[pre_val].movable) {
-			model_t* obj = &models[pre_val];
 
-			obj->cur_pos = cur_pos;
-			obj->center.y -= 15.0f;
-			cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
-			cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
-			cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
-			just_move = false;
+		if (pre_val != -1) {
+			if (action == PULL && models[pre_val].movable) {
+				model_t* obj = &models[pre_val];
+
+				obj->cur_pos = cur_pos;
+				obj->center.y -= 15.0f;
+				cur_map.map[int(pre_pos.x)][int(pre_pos.y)] = 0;
+				cur_map.map[int(cur_pos.x)][int(cur_pos.y)] = pre_val;
+				cur_map.map[int(next_pos.x)][int(next_pos.y)] = index;
+				just_move = false;
+			}
 		}
 	}
 	if (just_move) {
