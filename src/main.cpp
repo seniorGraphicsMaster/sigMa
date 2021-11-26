@@ -655,6 +655,7 @@ void load_help_scene() {
 		render_text("Press 'A' button to pull the object.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Press 'S' button to push the object.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Only one object can be pushed/pulled at a time.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'F1' to go next page.", 440, 470, 0.3f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 	}
 	else if (help_count == 2) {
 		render_text("You can reset the game by using 'R' button.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
@@ -663,10 +664,12 @@ void load_help_scene() {
 		render_text("Enemies will also die if they are obscured by objects in 2d mode.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("It dies when it runs out of energy.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Energy can be recharged at a charging station.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'F1' to go next page.", 440, 470, 0.3f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 	}
 	else if (help_count == 3) {
 		render_text("If you acquire a key, your progress will be saved.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Go through the door and go to the next room.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'F1' to back to stage.", 440, 470, 0.3f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 	}
 	
 }
@@ -1115,6 +1118,7 @@ void render()
 
 		}
 		b_2d = false;
+		in_game = false;
 		glUseProgram(program_img);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, END);
@@ -1472,7 +1476,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 	if (action == GLFW_PRESS)
 	{
 		if (key == GLFW_KEY_ESCAPE)	glfwSetWindowShouldClose(window, GL_TRUE);
-		else if (key == GLFW_KEY_Q) {
+		else if (key == GLFW_KEY_Q && !b_clear) {
 			scene = 0;
 			restart();
 			in_game = false;
@@ -1518,7 +1522,7 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			} 
 			
 		}
-		else if (key == GLFW_KEY_HOME)					cam = camera();
+		else if (key == GLFW_KEY_HOME && !b_clear)					cam = camera();
 		else if (key == GLFW_KEY_S && scene == 0)					scene = 1;
 		else if (key == GLFW_KEY_N && scene != 0 && scene < 5) scene++;
 			
@@ -1527,12 +1531,12 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			b_2d = !b_2d;
 		}
 		else if (key == GLFW_KEY_R) {
-			if (scene > 5) {
+			if (scene > 5 && !b_clear) {
 				reset();
 				restart();
 			}
 		}
-		else if (key == GLFW_KEY_P) {
+		else if (key == GLFW_KEY_P && !b_clear) {
 			pause = !pause;
 			in_game = !in_game;
 		}
