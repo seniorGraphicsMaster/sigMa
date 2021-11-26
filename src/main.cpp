@@ -429,17 +429,32 @@ void enemy_move_pat1(model_t& enemy) {
 	}
 }
 
-void key_active_chk(wall_t& key) {
+void key_capture() {
+	key_scene = scene;
+
+	key_state.save_map = cur_map;
+
+	hero_state.save_passed = hero_state.passed;
+	key_state.save_charge = hero_state.save_charging;
+	start_t = float(glfwGetTime());
+
+	key_state.save_model = models;
+	key_state.save_wall = walls;
+	key_state.pat1 = pat1_count;
+}
+
+void key_active_chk(wall_t& key, int key_scene) {
 	//key active
-	if (keys[key.id - 4] != 1) {
+	if (keys[key.id - 4] != 1 && key_scene == scene) {
 		if (b_2d) {
 			key.active = false;
-
+			
 			if (cur_map.map[(int)hero->cur_pos.x][key.wallpos] == 1) {
 				keys[key.id - 4] = 1;
+				key_capture();
 			}
 
-			if (cur_map.map[(int)hero->cur_pos.x][walls[12].wallpos] == 0) {
+			if (cur_map.map[(int)hero->cur_pos.x][key.wallpos] == 0) {
 				models[key.id].active = true;
 				obj_3d_pos(models[key.id], cur_map, scene, vec2(hero->cur_pos.x, (float)key.wallpos));
 			}
@@ -470,12 +485,30 @@ void rules_level(int level) {
 		enemy_killed(models[15]);
 		enemy_search(models[4]);
 		enemy_move_pat1(models[15]);
-		key_active_chk(walls[12]);
+		key_active_chk(walls[12], 6);
+
+		if (scene == 9 && keys[2] != 1) {
+			for (int i = 0; i < (int)cur_map.grid.x; i++) {
+				if (cur_map.map[i][6] == 2) {
+					for (int j = 0; j < (int)cur_map.grid.x; j++) {
+						if (cur_map.map[j][7] == 10) {
+							models[6].active = true;
+							cur_map.map[6][0] = 6;
+							break;
+						}
+						else {
+							models[6].active = false;
+						}
+					}
+				}
+			}
+		}
+
 		break;
 	case 3:
 		enemy_killed(models[4]);
 		enemy_search(models[4]);
-		key_active_chk(walls[12]);
+		key_active_chk(walls[12], 6);
 		break;
 	}
 	
@@ -844,20 +877,6 @@ void load_state(int load_scene) {
 	walls = save_states[load_scene].save_wall;
 }
 
-void key_capture() {
-	key_scene = scene;
-
-	key_state.save_map = cur_map;
-
-	hero_state.save_passed = hero_state.passed;
-	key_state.save_charge = hero_state.save_charging;
-	start_t = float(glfwGetTime());
-
-	key_state.save_model = models;
-	key_state.save_wall = walls;
-	key_state.pat1 = pat1_count;
-}
-
 void reset() {
 	//change key_scene
 	scene = key_scene;
@@ -1022,19 +1041,19 @@ void init_state(int level) {
 		set_false();
 		walls[6].active = true;
 		walls[7].active = true;
-		walls[8].active = true;
+		walls[9].active = true;
 		walls[11].active = true;
 
 		//set beacon
 		obj_floor_pos(walls[6], 7, vec2(4, 2));
-		obj_floor_pos(walls[7], 7, vec2(6, 13));
-		obj_2d_pos(walls[8], 7, 1, 2, 1, vec2(1, 1));
+		obj_floor_pos(walls[7], 7, vec2(10, 2));
+		obj_2d_pos(walls[9], 7, 1, 2, 1, vec2(1, 1));
 
 		//set charge
 		obj_floor_pos(walls[11], 7, vec2(13, 7));
 
 		//active obj
-		models[7].active = true;
+		models[8].active = true;
 
 		models[2].active = true;
 		models[3].active = true;
@@ -1067,10 +1086,10 @@ void init_state(int level) {
 		//set door pos
 		obj_2d_pos(walls[1], 7, 0, 2, 0, vec2(1, 2));
 		obj_2d_pos(walls[2], 7, 1, 8, 0, vec2(1, 2));
-		obj_2d_pos(walls[3], 7, 0, 10, 0, vec2(1, 2));
+		obj_2d_pos(walls[4], 7, 0, 10, 0, vec2(1, 2));
 
 		//set key pos
-		obj_3d_pos(models[7], cur_map, 7, vec2(14, 13));
+		obj_3d_pos(models[8], cur_map, 7, vec2(14, 13));
 
 		capture(7);
 
@@ -1081,35 +1100,42 @@ void init_state(int level) {
 		//set all object false
 		set_false();
 
-		walls[8].active = true;
+		walls[9].active = true;
 		walls[11].active = true;
 
+		walls[17].active = true;
+		walls[18].active = true;
+		walls[19].active = true;
+
 		//set beacon
-		obj_floor_pos(walls[8], 9, vec2(1, 0));
+		obj_floor_pos(walls[9], 9, vec2(8, 3));
 
 		//set charge
-		obj_floor_pos(walls[11], 9, vec2(0, 7));
+		obj_floor_pos(walls[11], 9, vec2(1, 2));
+
+		//set checking
+		obj_2d_pos(walls[17], 9, 0, 6, 0, vec2(1, 1));
+		obj_2d_pos(walls[18], 9, 0, 7, 1, vec2(1, 1));
+		obj_2d_pos(walls[19], 9, 0, 7, 0, vec2(1, 1));
 
 		//active obj
-
-		models[6].active = true;
-
 		models[2].active = true;
-		models[3].active = true;
+		models[10].active = true;
 		models[5].active = false;
 
 		//set hero pos
 		obj_3d_pos(*hero, cur_map, 9, vec2(4, 9));
 
 		//set wood pos
-		obj_3d_pos(models[3], cur_map, 9, vec2(0, 2));
-		obj_3d_pos(models[2], cur_map, 9, vec2(0, 3));
+		obj_3d_pos(models[10], cur_map, 9, vec2(6, 4));
+		obj_3d_pos(models[2], cur_map, 9, vec2(6, 5));
 
 		//set door pos
-		obj_2d_pos(walls[3], 9, 1, 4, 0, vec2(1, 2));
+		obj_2d_pos(walls[4], 9, 1, 4, 0, vec2(1, 2));
 
 		//set key pos
 		obj_3d_pos(models[6], cur_map, 9, vec2(6, 0));
+		cur_map.map[6][0] = 0;
 		capture(9);
 
 		break;
@@ -1442,6 +1468,7 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
+			if (i == 18 && !b_2d) continue;
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); 
 			
 			if (i > 17) continue;
@@ -1796,10 +1823,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						b_clear = true;
 						break;
 					case 3: // yellow
-						if (scene == 9) scene = 7;
-						else scene = 9;
 						break;
 					case 4: // red
+						if (scene == 9) scene = 7;
+						else scene = 9;
 						break;
 					case 5: // blue
 						break;
@@ -1834,10 +1861,10 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 						b_clear = true;
 						break;
 					case 3: // yellow
-						if (scene == 9) scene = 7;
-						else scene = 9;
 						break;
 					case 4: // red
+						if (scene == 9) scene = 7;
+						else scene = 9;
 						break;
 					case 5: // blue
 						break;
