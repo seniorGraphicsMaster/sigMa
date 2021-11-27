@@ -233,7 +233,7 @@ GLuint	wall_tex[5];
 map_t	cur_map;
 int		keys[6];
 state	save_states[11];
-state	key_state;
+state	key_state[11];
 int		key_scene = 0;
 int		killed_index = 0;
 const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
@@ -441,18 +441,28 @@ void enemy_move_pat1(model_t& enemy) {
 	}
 }
 
+void capture(int scene) {
+	save_states[scene].save_map = cur_map;
+
+	save_states[scene].save_model = models;
+	save_states[scene].save_wall = walls;
+
+}
+
 void key_capture() { // when key get, save state
 	key_scene = scene;
 
-	key_state.save_map = cur_map;
+	capture(scene);
+
+	for (int i = 6; i <= 10; i++) {
+		key_state[i] = save_states[i];
+	}
 
 	hero_state.save_passed = hero_state.passed;
-	key_state.save_charge = hero_state.save_charging;
+	key_state[scene].save_charge = hero_state.save_charging;
+	key_state[scene].pat1 = pat1_count;
+	
 	start_t = float(glfwGetTime());
-
-	key_state.save_model = models;
-	key_state.save_wall = walls;
-	key_state.pat1 = pat1_count;
 }
 
 void key_active_chk(wall_t& key, int key_scene) {
@@ -548,6 +558,7 @@ void rules_level(int level) {
 				if (save_states[10].save_map.map[5][1] == 2 || save_states[10].save_map.map[5][1] == 3) {
 					if (keys[2] != 1) {
 						models[6].active = true;
+						obj_3d_pos(models[6], cur_map, 7, vec2(6, 2));
 					}
 					walls[7].active = true;
 					break;
@@ -905,15 +916,6 @@ void load_game_scene(int scene) {
 	}
 }
 
-void capture(int scene) {
-	save_states[scene].save_map = cur_map;
-	
-	save_states[scene].save_model = models;
-	save_states[scene].save_wall = walls;
-
-	
-}
-
 void load_state(int load_scene) {
 
 	/*
@@ -934,17 +936,23 @@ void reset() {
 	scene = key_scene;
 	start_t = float(glfwGetTime());
 
-	//map loading
-	cur_map = key_state.save_map;
+	//map loading, load model setting
+	for (int i = 6; i <= 10; i++) {
+		save_states[i] = key_state[i];
+	}
+	
+	cur_map = key_state[scene].save_map;
+	models = key_state[scene].save_model;
+	walls = key_state[scene].save_wall;
 
 	hero_state.stopped = 0;
-	hero_state.save_charging = key_state.save_charge;
+	hero_state.save_charging = key_state[scene].save_charge;
 	hero_state.total_charging = hero_state.save_charging;
 
 	//load model setting
-	models = key_state.save_model;
-	walls = key_state.save_wall;
-	pat1_count = key_state.pat1;
+	pat1_count = key_state[scene].pat1;
+
+
 
 	load_game_scene(key_scene);
 	
@@ -1265,8 +1273,7 @@ void init_state(int level) {
 		obj_3d_pos(models[10], cur_map, 7, vec2(4, 10));
 		obj_3d_pos(models[3], cur_map, 7, vec2(11, 9));
 		obj_3d_pos(models[13], cur_map, 7, vec2(12, 9));
-		// key
-		obj_3d_pos(models[6], cur_map, 7, vec2(6,2)); 
+		
 		//set enemy pos
 		models[4].theta = PI / 2;
 		obj_3d_pos(models[4], cur_map, 7, vec2(2, 5));
