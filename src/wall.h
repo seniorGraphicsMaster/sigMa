@@ -58,6 +58,8 @@ inline std::vector<wall_t> set_wall() {
 	arr.emplace_back(m);
 	m = { 9, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//key 5
 	arr.emplace_back(m);
+	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//coord
+	arr.emplace_back(m);
 	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 1
 	arr.emplace_back(m);
 	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 2
@@ -68,6 +70,7 @@ inline std::vector<wall_t> set_wall() {
 	arr.emplace_back(m);
 	m = { 0, vec3(-39.48f,52.5f,21.0f),vec2(15.0f,20.0f), false };//checking 5
 	arr.emplace_back(m);
+	
 	
 	return arr;
 }

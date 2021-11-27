@@ -33,7 +33,7 @@ static const char* mesh_living_key = "mesh/gimmick/key_black/key_black.obj";
 static const char* mesh_kitchen_key = "mesh/gimmick/key_orange/key_orange.obj";
 static const char* mesh_bedroom_key = "mesh/gimmick/key_red/key_red.obj";
 static const char* mesh_bathroom_key = "mesh/gimmick/key_blue/key_blue.obj";
-
+//*************************************
 static const char* vert_shader_path = "shaders/model.vert";
 static const char* frag_shader_path = "shaders/model.frag";
 static const char* vert_background_path = "shaders/skybox.vert";		// text vertex shaders
@@ -65,9 +65,11 @@ static const char* img_key_living = "texture/key_black.png";
 static const char* img_key_kitchen = "texture/key_yellow.png";
 static const char* img_key_bedroom = "texture/key_red.png";
 static const char* img_key_bathroom = "texture/key_blue.png";
-static const char* img_end = "images/ending.png";
 static const char* img_checking = "texture/checking.png";
 static const char* img_charge = "texture/charge.jpg";
+static const char* img_coord = "texture/coord.png";
+//*************************************
+static const char* img_end = "images/ending.png";
 static const char* img_start = "images/hero.png";
 static const char* img_help = "images/hero_background.png";
 //*************************************
@@ -124,7 +126,7 @@ struct state
 
 struct enemy_state
 {
-	float search_interval = 1.3f;
+	float search_interval = 5.3f;
 	float latest_search = 0.0f;
 };
 
@@ -182,6 +184,7 @@ GLuint	KEY_bathroom = 0;
 
 GLuint  CHARGE = 0;
 GLuint	CHECKING = 0;
+GLuint  COORDINATE = 0;
 
 GLuint	START = 0;
 GLuint	HELP = 0;
@@ -229,7 +232,7 @@ GLuint	wall_tex[5];
 
 map_t	cur_map;
 int		keys[6];
-state	save_states[10];
+state	save_states[11];
 state	key_state;
 int		key_scene = 0;
 int		killed_index = 0;
@@ -438,7 +441,7 @@ void enemy_move_pat1(model_t& enemy) {
 	}
 }
 
-void key_capture() {
+void key_capture() { // when key get, save state
 	key_scene = scene;
 
 	key_state.save_map = cur_map;
@@ -485,26 +488,32 @@ void rules_level(int level) {
 
 	switch (level) {
 	case 1:
+		//living room
 		enemy_killed(models[4]);
 		enemy_killed(models[11]);
 		break;
 	case 2:
+		//living room
 		enemy_killed(models[11]);
 		enemy_killed(models[15]);
 		enemy_move_pat1(models[15]);
-		key_active_chk(walls[12], 6);
 		key_active_chk(walls[13], 9);
+		//warehouse
+		key_active_chk(walls[12], 6);
+		
 
 		break;
 	case 3:
+		// living room
 		enemy_killed(models[4]);
 		enemy_killed(models[11]);
 		enemy_killed(models[15]);
 		enemy_search(models[4]);
 		enemy_search(models[11]);
 		enemy_search(models[15]);
+		//warehouse
 		key_active_chk(walls[12], 6);
-
+		//bedroom
 		if (scene == 9 && keys[3] != 1) {
 			for (int i = 0; i < (int)cur_map.grid.x; i++) {
 				if (cur_map.map[i][6] == 2) {
@@ -521,12 +530,31 @@ void rules_level(int level) {
 				}
 			}
 		}
-
-		if (scene == 8) {
+		//kitchen
+		if (scene == 8 && keys[5] != 1) {
 			if (cur_map.map[2][1] == 2 || cur_map.map[2][1] == 3) {
 				if (cur_map.map[4][6] == 2 || cur_map.map[4][6] == 3) {
-					models[10].active = true;
+					models[9].active = true;
 					obj_3d_pos(models[9], cur_map, 8, vec2(2, 7));
+					break;
+				}
+				else {
+					models[9].active = false;
+				}
+			}
+		}
+		if (scene == 7) { // fin key
+			if (save_states[10].save_map.map[2][3] == 2 || save_states[10].save_map.map[2][3] == 3) {
+				if (save_states[10].save_map.map[5][1] == 2 || save_states[10].save_map.map[5][1] == 3) {
+					if (keys[2] != 1) {
+						models[6].active = true;
+					}
+					walls[7].active = true;
+					break;
+				}
+				else {
+					walls[7].active = false;
+					models[6].active = false;
 				}
 			}
 		}
@@ -879,9 +907,11 @@ void load_game_scene(int scene) {
 
 void capture(int scene) {
 	save_states[scene].save_map = cur_map;
-
+	
 	save_states[scene].save_model = models;
 	save_states[scene].save_wall = walls;
+
+	
 }
 
 void load_state(int load_scene) {
@@ -1122,9 +1152,6 @@ void init_state(int level) {
 		walls[9].active = true;
 		walls[11].active = true;
 
-		walls[17].active = true;
-		walls[18].active = true;
-		walls[19].active = true;
 
 		//set beacon
 		obj_floor_pos(walls[9], 9, vec2(1, 0));
@@ -1157,7 +1184,7 @@ void init_state(int level) {
 
 		//time set
 		start_t = float(glfwGetTime());
-		hero_state = herostate(35.0f, 180.0f);
+		hero_state = herostate(35.0f, 180.0f); //35 180
 
 		//-----------state scene 6-------------------
 
@@ -1238,8 +1265,8 @@ void init_state(int level) {
 		obj_3d_pos(models[10], cur_map, 7, vec2(4, 10));
 		obj_3d_pos(models[3], cur_map, 7, vec2(11, 9));
 		obj_3d_pos(models[13], cur_map, 7, vec2(12, 9));
-
-
+		// key
+		obj_3d_pos(models[6], cur_map, 7, vec2(6,2)); 
 		//set enemy pos
 		models[4].theta = PI / 2;
 		obj_3d_pos(models[4], cur_map, 7, vec2(2, 5));
@@ -1268,9 +1295,9 @@ void init_state(int level) {
 		walls[9].active = true;
 		walls[11].active = true;
 
-		walls[17].active = true;
 		walls[18].active = true;
 		walls[19].active = true;
+		walls[20].active = true;
 
 		//set beacon
 		obj_floor_pos(walls[9], 9, vec2(8, 3));
@@ -1279,9 +1306,9 @@ void init_state(int level) {
 		obj_floor_pos(walls[11], 9, vec2(1, 2));
 
 		//set checking
-		obj_2d_pos(walls[17], 9, 0, 6, 0, vec2(1, 1));
-		obj_2d_pos(walls[18], 9, 0, 7, 1, vec2(1, 1));
-		obj_2d_pos(walls[19], 9, 0, 7, 0, vec2(1, 1));
+		obj_2d_pos(walls[18], 9, 0, 6, 0, vec2(1, 1));
+		obj_2d_pos(walls[19], 9, 0, 7, 1, vec2(1, 1));
+		obj_2d_pos(walls[20], 9, 0, 7, 0, vec2(1, 1));
 
 		//active obj
 		models[2].active = true;
@@ -1313,13 +1340,25 @@ void init_state(int level) {
 
 		walls[17].active = true;
 		walls[18].active = true;
+		walls[19].active = true;
+		walls[20].active = true;
+
+		//set door pos
+		obj_2d_pos(walls[3], 8, 1, 2, 0, vec2(1, 2));
+		obj_2d_pos(walls[17], 8, 0, 8, 1, vec2(2, 1));
+		obj_2d_pos(walls[20], 8, 0, 6, 1, vec2(1, 1));
 
 		//set charge
 		obj_floor_pos(walls[11], 8, vec2(4, 1));
 
+		//set checking
+		obj_floor_pos(walls[18], 8, vec2(2, 1));
+		obj_floor_pos(walls[19], 8, vec2(4, 6));
+
 		//active obj
 		models[2].active = true;
 		models[3].active = true;
+		
 
 		//set hero pos
 		obj_3d_pos(*hero, cur_map, 8, vec2(2, 9));
@@ -1328,15 +1367,37 @@ void init_state(int level) {
 		obj_3d_pos(models[2], cur_map, 8, vec2(0, 9));
 		obj_3d_pos(models[3], cur_map, 8, vec2(0, 8));
 
-		//set door pos
-		obj_2d_pos(walls[3], 8, 1, 2, 0, vec2(1, 2));
-
-		//set checking
-		obj_floor_pos(walls[17], 8, vec2(2, 1));
-		obj_floor_pos(walls[18], 8, vec2(4, 6));
 		capture(8);
+		//-----------state scene 10-------------------
+
+		cur_map = maps[4];
+
+		//set all object false
+		set_false();
+		walls[5].active = true;
+		walls[11].active = true;
+		//set charge
+		obj_floor_pos(walls[11], 10, vec2(4, 0));
+
+		//set door pos
+		obj_2d_pos(walls[5], 10, 0, 2, 0, vec2(1, 2));
+	
+
+		//active obj
+		models[2].active = true;
+		models[3].active = true;
+
+		//set hero pos
+		obj_3d_pos(*hero, cur_map, 10, vec2(0, 2));
+
+		//set wood pos
+		obj_3d_pos(models[2], cur_map, 10, vec2(6, 3));
+		obj_3d_pos(models[3], cur_map, 10, vec2(9, 4));
 
 
+		capture(10);
+
+		
 		break;
 	}
 
@@ -1608,11 +1669,14 @@ void render()
 		glActiveTexture(GL_TEXTURE17);
 		glBindTexture(GL_TEXTURE_2D, KEY_bathroom);
 		glActiveTexture(GL_TEXTURE18);
-		glBindTexture(GL_TEXTURE_2D, CHECKING);
+		glBindTexture(GL_TEXTURE_2D, COORDINATE);
 		glActiveTexture(GL_TEXTURE19);
-		glBindTexture(GL_TEXTURE_2D, PARTICLE1);
+		glBindTexture(GL_TEXTURE_2D, CHECKING);
 		glActiveTexture(GL_TEXTURE20);
+		glBindTexture(GL_TEXTURE_2D, PARTICLE1);
+		glActiveTexture(GL_TEXTURE21);
 		glBindTexture(GL_TEXTURE_2D, PARTICLE2);
+		
 		
 		i = 1;
 		for (auto& w : walls) {
@@ -1625,10 +1689,10 @@ void render()
 			glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 			glUniform1i(glGetUniformLocation(program, "mode"), 1);
 
-			if (i == 18 && !b_2d && scene == 9) continue;
+			if (i == 19 && !b_2d && scene == 9) continue;
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr); 
 			
-			if (i > 17) continue;
+			if (i > 18) continue;
 			i++;
 		}
 		if (b_game) {
@@ -1638,7 +1702,7 @@ void render()
 				GLint uloc;
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
 				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 19);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 20);
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 				glUniform1i(glGetUniformLocation(program, "mode"), 2);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -1651,7 +1715,7 @@ void render()
 				GLint uloc;
 				uloc = glGetUniformLocation(program, "model_matrix");		if (uloc > -1) glUniformMatrix4fv(uloc, 1, GL_TRUE, p.model_matrix);
 				uloc = glGetUniformLocation(program, "color");			if (uloc > -1) glUniform4fv(uloc, 1, p.color);
-				glUniform1i(glGetUniformLocation(program, "TEX"), 20);
+				glUniform1i(glGetUniformLocation(program, "TEX"), 21);
 				glUniform1i(glGetUniformLocation(program, "use_texture"), true);
 				glUniform1i(glGetUniformLocation(program, "mode"), 2);
 				glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
@@ -1840,6 +1904,8 @@ bool user_init()
 	CHECKING = cg_create_texture(img_checking, true); if (!CHECKING) return false;
 
 	CHARGE = cg_create_texture(img_charge, true); if (!CHARGE) return false;
+
+	COORDINATE = cg_create_texture(img_coord, true); if (!COORDINATE) return false;
 
 	PARTICLE1 = cg_create_texture(particle_explode, true); if (!PARTICLE1) return false;
 	PARTICLE2 = cg_create_texture(particle_splash, true); if (!PARTICLE2) return false;
