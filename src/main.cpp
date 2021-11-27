@@ -1580,6 +1580,7 @@ void render()
 		float dpi_scale = cg_get_dpi_scale();
 		render_text("GAME CLEAR!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.5f, 0.5f, 0.1f, 0.8f), dpi_scale);
 		render_text("Please press 'ESC' to finish the game", window_size.x / 2 - 130, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("Please press 'R' to restart the game", window_size.x / 2 - 130, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		goto skip;
 	}
 
@@ -2006,6 +2007,13 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 			b_2d = !b_2d;
 		}
 		else if (key == GLFW_KEY_R) {
+			if (b_clear) {
+				scene = 0;
+				restart();
+				in_game = false;
+				b_clear = false;
+			}
+
 			if (scene > 5) {
 				reset();
 				restart();
