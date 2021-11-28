@@ -724,7 +724,7 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("My name is zetbot.. I'm vending machine..", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("My name is zetbot.. I'm Robotic Vacuum Cleaner..", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 		render_text("Please press 'n' to next", txtposx(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		
 		break;
