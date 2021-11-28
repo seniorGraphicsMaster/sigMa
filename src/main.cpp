@@ -118,9 +118,9 @@ struct state
 	map_t save_map;
 	std::vector<model_t> save_model;
 	std::vector<wall_t> save_wall;
-	float save_time_passed;
-	float save_charge;
-	int	  pat1;
+	float save_time_passed = 0.0f;
+	float save_charge = 0.0f;
+	int	  pat1 = 0;
 
 };
 
@@ -1770,10 +1770,7 @@ void reshape(GLFWwindow* window, int width, int height)
 void print_help()
 {
 	printf("[help]\n");
-	printf("- press ESC or 'q' to terminate the program\n");
-	printf("- press F1 or 'h' to see help\n");
-	printf("- press Home to reset camera\n");
-	printf("- press 'd' to toggle between OBJ format and 3DS format\n");
+	printf("- press ESC to terminate the program\n");
 	printf("\n");
 }
 
