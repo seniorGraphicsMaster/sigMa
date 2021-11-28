@@ -212,6 +212,7 @@ bool	b_sound = false;
 bool	in_game = false;
 bool	now_charge = false;
 bool	b_clear = false;
+bool	time_over = false;
 float	t;
 float	dead_interval = 1.5f;
 float	t_game;
@@ -293,7 +294,11 @@ int game_over_chk() {
 			}
 		}
 
-		if (hero_state.left_energy < 0.0f || hero_state.left_time < 0.0f) return 1;
+		if (hero_state.left_energy < 0.0f) return 1;
+		if (hero_state.left_time < 0.0f) {
+			time_over = true;
+			return 1;
+		}
 	}
 	return 0 ;
 }
@@ -2018,6 +2023,11 @@ void keyboard(GLFWwindow* window, int key, int scancode, int action, int mods)
 				restart();
 				in_game = false;
 				b_clear = false;
+			}
+
+			if (time_over) {
+				time_over = false;
+				load_level(difficulty);
 			}
 
 			if (scene > 5) {
