@@ -356,7 +356,7 @@ void enemy_killed(model_t& enemy) {
 		if (enemy.active) {
 			for (int i = int(cur_map.grid.x) - 1; i > -1; i--) {
 				if ((int)enemy.cur_pos.x == i) break;
-				else if (cur_map.map[i][(int)enemy.cur_pos.y] != CANMOVE && cur_map.map[i][(int)enemy.cur_pos.y] != -1) {
+				else if (cur_map.map[i][(int)enemy.cur_pos.y] != CANMOVE && cur_map.map[i][(int)enemy.cur_pos.y] != -1 && cur_map.map[i][(int)enemy.cur_pos.y] != 1) {
 					
 					if (is_exec) return;
 					killed_index = enemy.index;
@@ -1584,9 +1584,9 @@ void render()
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		float dpi_scale = cg_get_dpi_scale();
-		render_text("GAME CLEAR!", window_size.x / 2 - 150, txtposy(70), 1.5f, vec4(0.5f, 0.5f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'ESC' to finish the game", window_size.x / 2 - 130, window_size.y / 2 + 100, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
-		render_text("Please press 'R' to restart the game", window_size.x / 2 - 130, window_size.y / 2 + 150, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("GAME CLEAR!", txtposx(300), txtposy(70), 1.5f, vec4(0.5f, 0.5f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'ESC' to finish the game", txtposx(320), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("Please press 'R' to restart the game", txtposx(320), txtposy(450), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		goto skip;
 	}
 
@@ -1598,8 +1598,8 @@ void render()
 		}
 		if (killed_index == 1) {
 			float dpi_scale = cg_get_dpi_scale();
-			render_text("GAME OVER!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
-			render_text("Please press 'R' to restart stage!", window_size.x / 2 - 150, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+			render_text("GAME OVER!", txtposx(300), txtposy(70), 1.5f, vec4(0.7f, 0.1f, 0.1f, 0.8f), dpi_scale);
+			render_text("Please press 'R' to restart stage!", txtposx(300), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 			goto skip;
 		}
 		
