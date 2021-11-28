@@ -259,6 +259,13 @@ herostate	hero_state;
 enemy_state flower[30];
 enemy_state flower2 = { 0.5f, 0.0f };
 
+GLint txtposx(GLint x) {
+	return window_size.x * x / 900;
+}
+
+GLint txtposy(GLint y) {
+	return window_size.y * y / 600;
+}
 
 #pragma region GAME_MANAGE  //Game over check
 
@@ -690,7 +697,6 @@ GLuint loadCubemap(std::vector<std::string> faces) {
 void load_start_scene(int scene) {
 	
 	float dpi_scale = cg_get_dpi_scale();
-	
 
 	switch (scene) {
 	case 0:
@@ -701,9 +707,9 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("DOM_HWANG_CHA", 50, 100, 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
-		render_text("Team sigma - Dongmin, Dongjun, Jiye", 50, 355, 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please 's' to start", 50, 400, 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("DOM_HWANG_CHA", txtposx(50), txtposy(100), 1.0f, vec4(0.5f, 0.8f, 0.2f, 1.0f), dpi_scale);
+		render_text("Team sigma - Dongmin, Dongjun, Jiye", txtposx(50), txtposy(355), 0.5f, vec4(0.7f, 0.4f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please 's' to start", txtposx(50), txtposy(400), 0.6f, vec4(0.5f, 0.5f, 0.5f, abs(sin(t * 2.5f))), dpi_scale);
 		break;
 	case 1:
 		glUseProgram(program_img);
@@ -713,8 +719,8 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("My name is zetbot.. I'm vending machine..", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("My name is zetbot.. I'm vending machine..", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", txtposx(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		
 		break;
 	case 2:
@@ -725,9 +731,9 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("I can't live in this house cleaning anymore!", 30, 300, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("I'm going to escape!", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("I can't live in this house cleaning anymore!", txtposx(30), txtposy(300), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("I'm going to escape!", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", txtposx(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		break;
 	case 3:
 		glUseProgram(program_img);
@@ -737,9 +743,9 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("To escape, move the box in 3D and get the key", 30, 300, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("...... ", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("To escape, move the box in 3D and get the key", txtposx(30), txtposy(300), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("...... ", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", txtposx(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		break;
 	case 4:
 		glUseProgram(program_img);
@@ -749,9 +755,9 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("I have to escape the room within a certain time.", 30, 300, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("IF my battery runs out or the owner retuns, I fail.. ", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Please press 'n' to next", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("I have to escape the room within a certain time.", txtposx(30), txtposy(300), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("IF my battery runs out or the owner retuns, I fail.. ", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press 'n' to next", txtposx(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		break;
 	case 5:
 		glUseProgram(program_img);
@@ -761,12 +767,12 @@ void load_start_scene(int scene) {
 		glBindVertexArray(VAO_IMAGE);
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
-		render_text("Please choose the difficulty of the game", 30, 100, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("#1 Easy - Number of room : 2", 30, 150, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("#2 Middle - Number of room : 3", 30, 200, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("#3 Hard - Number of room : 5", 30, 250, 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Follow the instruction and good luck!", 30, 355, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Please press number of the difficulty to start", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("Please choose the difficulty of the game", txtposx(30), txtposy(100), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#1 Easy - Number of room : 2", txtposx(30), txtposy(150), 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#2 Middle - Number of room : 3", txtposx(30), txtposy(200), 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("#3 Hard - Number of room : 5", txtposx(30), txtposy(250), 0.3f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Follow the instruction and good luck!", txtposx(30), txtposy(355), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Please press number of the difficulty to start", txtposx(30), 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		break;
 	
 	default:
@@ -801,28 +807,28 @@ void load_help_scene() {
 	// render quad vertices
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 	float dpi_scale = cg_get_dpi_scale();
-	render_text("Instruction", 200, 60, 1.0f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
-	render_text("Room escape game that goes beyond 2D and 3D.", 100, 100, 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+	render_text("Instruction", 200, txtposy(60), 1.0f, vec4(1.0f, 1.0f, 1.0f, 1.0f), dpi_scale);
+	render_text("Room escape game that goes beyond 2D and 3D.", txtposx(100), txtposy(100), 0.5f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 
 	if (help_count == 1) {
-		render_text("You have to escape within the limited time.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("You can move using up, down, left, right keys.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Press 'F' button to change the dimension.", 30, 300, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Press 'A' button to pull the object.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Press 'S' button to push the object.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Only one object can be pushed/pulled at a time.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("You have to escape within the limited time.", txtposy(30), txtposy(200), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("You can move using up, down, left, right keys.", txtposy(30), txtposy(250), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Press 'F' button to change the dimension.", txtposy(30), txtposy(300), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Press 'A' button to pull the object.", txtposy(30), txtposy(350), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Press 'S' button to push the object.", txtposy(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Only one object can be pushed/pulled at a time.", txtposy(30), txtposy(450), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 	}
 	else if (help_count == 2) {
-		render_text("You can reset the game by using 'R' button.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Something special happens when you obscure a 2d object.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("When in 2d mode, it will die if it is obscured by an object.", 30, 300, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Enemies will also die if they are obscured by objects in 2d mode.", 30, 350, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("It dies when it runs out of energy.", 30, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Energy can be recharged at a charging station.", 30, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("You can reset the game by using 'R' button.", txtposy(30), txtposy(200), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Something special happens when you obscure a 2d object.", txtposy(30), txtposy(250), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("When in 2d mode, it will die if it is obscured by an object.", txtposy(30), txtposy(300), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Enemies will also die if they are obscured by objects in 2d mode.", txtposy(30), txtposy(350), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("It dies when it runs out of energy.", txtposy(30), txtposy(400), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Energy can be recharged at a charging station.", txtposy(30), txtposy(450), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 	}
 	else if (help_count == 3) {
-		render_text("If you acquire a key, your progress will be saved.", 30, 200, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
-		render_text("Go through the door and go to the next room.", 30, 250, 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("If you acquire a key, your progress will be saved.", txtposy(30), txtposy(200), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
+		render_text("Go through the door and go to the next room.", txtposy(30), txtposy(250), 0.4f, vec4(1.0f, 1.0f, 1.0f, 0.8f), dpi_scale);
 	}
 }
 
@@ -1578,9 +1584,9 @@ void render()
 		// render quad vertices
 		glDrawArrays(GL_TRIANGLES, 0, 6);
 		float dpi_scale = cg_get_dpi_scale();
-		render_text("GAME CLEAR!", window_size.x / 2 - 150, 70, 1.5f, vec4(0.5f, 0.5f, 0.1f, 0.8f), dpi_scale);
-		render_text("Please press 'ESC' to finish the game", window_size.x / 2 - 130, 400, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
-		render_text("Please press 'R' to restart the game", window_size.x / 2 - 130, 450, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("GAME CLEAR!", window_size.x / 2 - 150, txtposy(70), 1.5f, vec4(0.5f, 0.5f, 0.1f, 0.8f), dpi_scale);
+		render_text("Please press 'ESC' to finish the game", window_size.x / 2 - 130, window_size.y / 2 + 100, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
+		render_text("Please press 'R' to restart the game", window_size.x / 2 - 130, window_size.y / 2 + 150, 0.4f, vec4(1.0f, 1.0f, 1.0f, abs(sin(t * 2.5f))), dpi_scale);
 		goto skip;
 	}
 
